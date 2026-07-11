@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SS_Studio</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<header id="app-header">
+  <div class="wordmark">
+    <span class="wordmark-ss">SS</span><span class="wordmark-under">_</span><span class="wordmark-studio">Studio</span>
+    <span class="wordmark-version">v7.23.2</span>
+  </div>
+
+  <div class="header-right">
+    <div id="project-switcher-wrap">
+      <span id="project-label">Project</span>
+      <select id="project-select" title="Switch project"></select>
+      <button class="btn btn-primary btn-sm" id="btn-new-project-header" onclick="openProjectManager(true)" style="display:none">＋ New Project</button>
+      <button class="btn-icon" id="btn-manage-projects" data-tooltip="Manage projects" onclick="openProjectManager()">📁</button>
+    </div>
+    <div id="user-chip" title="Current user" style="display:none">
+      <div class="user-avatar" id="user-avatar-initial"></div>
+      <span id="user-chip-name"></span>
+    </div>
+    <button class="btn-icon" id="btn-theme-toggle" data-tooltip="Toggle light/dark" onclick="toggleTheme()">🌙</button>
+    <button class="btn btn-secondary btn-sm" id="btn-help-tour" data-tooltip="Show the guided tour" onclick="startTour()">❓ Help</button>
+    <button class="btn-icon" data-tooltip="Settings" onclick="openSettings()">⚙</button>
+  </div>
+</header>
+<script>
+  (function() {
+    var THEME_KEY = 'SS_Studio_theme';
+    function applyTheme(theme) {
+      if (theme === 'light' || theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', theme);
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+      var btn = document.getElementById('btn-theme-toggle');
+      if (btn) {
+        var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        btn.textContent = isDark ? '☀' : '🌙';
+      }
+    }
+    window.toggleTheme = function() {
+      var current = localStorage.getItem(THEME_KEY);
+      var isDark = current === 'dark' || (!current && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = isDark ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, next);
+      applyTheme(next);
+    };
+    applyTheme(localStorage.getItem(THEME_KEY));
+    // Added 2026-07-10 (future-features backlog): re-apply on a live OS
+    // appearance change, but only if the user has never manually toggled
+    // the theme (no THEME_KEY stored) — a manual choice should stick
+    // regardless of what the OS does afterward. Previously this only ran
+    // once at page load, so switching the Mac's appearance mid-session had
+    // no effect until a full reload.
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (!localStorage.getItem(THEME_KEY)) applyTheme(null);
+      });
+    }
+  })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MAIN NAV                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<nav id="main-nav">
+  <button class="nav-tab active" data-view="library" onclick="switchView('library')">
+    Library <span class="nav-badge" id="nav-badge-library">0</span>
+  </button>
+  <button class="nav-tab" data-view="single" onclick="switchView('single')">
+    Single Frame
+  </button>
+  <button class="nav-tab" data-view="storyboard" onclick="switchView('storyboard')">
+    Storyboard
+  </button>
+  <button class="nav-tab" data-view="sequences" onclick="switchView('sequences')">
+    Sequences
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: LIBRARY                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-library" class="view active">
+  <div class="page-wrap">
+
+    <!-- No project state -->
+    <div id="no-project-state" style="display:none">
+      <div class="welcome-title">Build your <em>visual world</em>.</div>
+      <p class="welcome-sub">Start by creating a project. Your characters, locations, props, and periods will live here — ready to inject into every prompt.</p>
+      <button class="btn btn-primary" onclick="openProjectManager(true)">＋ Create first project</button>
+    </div>
+
+    <!-- Library content -->
+    <div id="library-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="library-project-name">Project Library</h1>
+          <p class="page-subtitle">Define assets once — reuse across every prompt. No AI needed.</p>
+          <button class="btn-link-sm" id="migrate-library-btn" onclick="runLibraryMigration()"
+            style="background:none;border:none;padding:0;margin-top:4px;font-size:0.72rem;color:var(--ink-lt);text-decoration:underline;cursor:pointer;">
+            Migrate existing assets to shared library
+          </button>
+          <button class="btn-link-sm" id="dedupe-library-btn" onclick="runLibraryDedupe()"
+            style="background:none;border:none;padding:0;margin-top:4px;margin-left:12px;font-size:0.72rem;color:var(--ink-lt);text-decoration:underline;cursor:pointer;">
+            Clean up duplicate assets
+          </button>
+        </div>
+        <button class="btn btn-primary" onclick="openAssetModal(null, getCurrentType())">
+          <span>＋</span> Add <span id="add-btn-type-label">Asset</span>
+        </button>
+      </div>
+
+      <!-- Asset type tabs -->
+      <div id="lib-type-tabs">
+        <button class="lib-type-tab active" data-type="character" onclick="switchAssetType('character')">
+          Characters <span class="lib-type-count" id="count-character">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="location" onclick="switchAssetType('location')">
+          Locations <span class="lib-type-count" id="count-location">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="prop" onclick="switchAssetType('prop')">
+          Props <span class="lib-type-count" id="count-prop">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="era" onclick="switchAssetType('era')">
+          Era &amp; Context <span class="lib-type-count" id="count-era">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="style" onclick="switchAssetType('style')">
+          Background Style <span class="lib-type-count" id="count-style">0</span>
+        </button>
+      </div>
+
+      <!-- Asset grid -->
+      <div id="asset-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: SINGLE FRAME                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-single" class="view">
+  <div class="sf-layout">
+
+    <!-- LEFT: Layer Stack -->
+    <div class="sf-left" id="sf-left">
+
+      <!-- No project warning -->
+      <div id="sf-no-project" style="display:none">
+        <div class="sf-noproj-msg">
+          <p>Create a project first to use the Single Frame builder.</p>
+          <button class="btn btn-primary btn-sm" onclick="openProjectManager(true)">＋ Create Project</button>
+        </div>
+      </div>
+
+      <div id="sf-stack">
+
+        <!-- ONBOARDING BANNER — shown once, dismissible -->
+        <div class="sf-onboarding-banner" id="sf-onboarding-banner">
+          <div class="sf-onboarding-title">🎬 How to build a prompt</div>
+          <div class="sf-onboarding-steps">
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">1</span><span>Select your <strong>Library Assets</strong> — characters, locations, props you've defined. Their descriptions auto-inject into the prompt.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">2</span><span>Pick a <strong>Frame Size</strong> — the app auto-selects the right lens and depth of field for you.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">3</span><span>Describe the <strong>action or scene</strong> in the Subject field. Type <strong>@name</strong> to link a library asset inline.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">4</span><span>Adjust <strong>Lighting, Mood, and Quality</strong> as needed — or leave defaults. The prompt builds live on the right.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">5</span><span>Select your <strong>Platform</strong> at the bottom, copy the prompt, and paste into your AI image generator.</span></div>
+          </div>
+          <div class="sf-onboarding-extras">
+            <span class="sf-onboarding-tip">✦ <strong>Dashed amber chip</strong> = auto-suggested by the app. Click to change.</span>
+            <span class="sf-onboarding-tip">＋ <strong>Plus button</strong> on any chip group = add your own keyword. Right-click a custom chip to delete it.</span>
+            <span class="sf-onboarding-tip">🎭 <strong>Signature Techniques</strong> = advanced cinematic effects — toggle on for richer output.</span>
+          </div>
+          <button class="sf-onboarding-dismiss" onclick="dismissOnboarding()">✕ Got it</button>
+        </div>
+
+        <!-- OUTPUT TYPE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Output Type</div>
+          <div class="sf-toggle-row" id="sf-output-type">
+            <button class="sf-toggle active" data-val="still" onclick="setSFOutputType('still')">Still Image</button>
+            <button class="sf-toggle" data-val="motion" onclick="setSFOutputType('motion')">Motion Poster</button>
+          </div>
+        </div>
+
+        <!-- LAYER 1: LIBRARY ASSETS -->
+        <div class="sf-section">
+          <div class="sf-section-label">Library Assets <span class="sf-label-hint">auto-injects descriptions</span></div>
+          <div id="sf-asset-selector" class="sf-asset-chips"></div>
+          <!-- Reference-image strip — which actual image (Close-up/Mid Shot/
+               etc.) will back each selected/@mentioned asset for the chosen
+               frame size, plus any extra images available for platforms that
+               take multiple references (GPT Image 2). Ported from Storyboard
+               mode's inlineReferenceStripInnerHTML() (11-reference-panel.js);
+               gap found via testing 2026-06-29 — Single Frame never surfaced
+               this at all, so a multi-image character asset gave no
+               visibility into which photo was actually being used. See
+               renderSFReferenceStrip() in 02-singleframe.js. -->
+          <div id="sf-ref-strip" style="display:none"></div>
+        </div>
+
+        <!-- LAYER 2: GENRE / STYLE PRESET -->
+        <div class="sf-section">
+          <div class="sf-section-label">Genre / Style <span class="sf-label-hint">optional — loads vocabulary</span></div>
+          <div class="sf-chips" id="sf-genre-chips">
+            <!-- populated by renderSFGenreChips() on init -->
+          </div>
+        </div>
+
+        <!-- LAYER 3: SUBJECT -->
+        <div class="sf-section">
+          <div class="sf-section-label">Subject <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('subject')">⊕</button> <button class="sf-vocab-add-btn" title="Describe pose in detail" onclick="openPoseHelperModal({mode:'sf'})">🧍 Pose</button></div>
+          <div class="sf-chips" id="sf-subject-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-subject-text"
+              placeholder="Describe your subject — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-subject-text','sf-at-picker-subject','sf-at-list-subject')"
+              onkeydown="onSFFieldKeydown(event,'sf-subject-text','sf-at-picker-subject','sf-at-list-subject')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-subject" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-subject"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYER 4 & 5: FRAME SIZE + SHOT ANGLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Frame Size</div>
+          <div class="sf-frame-cards" id="sf-frame-cards">
+            <button class="sf-frame-card" data-val="face" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👁</div>
+              <div class="sf-frame-label">Face Only</div>
+              <div class="sf-frame-sub">Extreme close-up</div>
+            </button>
+            <button class="sf-frame-card" data-val="head" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🧑</div>
+              <div class="sf-frame-label">Head & Shoulders</div>
+              <div class="sf-frame-sub">Portrait</div>
+            </button>
+            <button class="sf-frame-card" data-val="waist" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🙆</div>
+              <div class="sf-frame-label">Waist Up</div>
+              <div class="sf-frame-sub">Medium shot</div>
+            </button>
+            <button class="sf-frame-card" data-val="fullbody" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🧍</div>
+              <div class="sf-frame-label">Full Body</div>
+              <div class="sf-frame-sub">Full figure</div>
+            </button>
+            <button class="sf-frame-card" data-val="wide" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🌄</div>
+              <div class="sf-frame-label">Wide / Scene</div>
+              <div class="sf-frame-sub">Environmental</div>
+            </button>
+            <button class="sf-frame-card" data-val="os" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🫂</div>
+              <div class="sf-frame-label">Over-the-Shoulder</div>
+              <div class="sf-frame-sub">Needs 2 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="twoshot" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👥</div>
+              <div class="sf-frame-label">Two Shot</div>
+              <div class="sf-frame-sub">Needs 2 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="threeshot" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👨‍👩‍👦</div>
+              <div class="sf-frame-label">Three Shot</div>
+              <div class="sf-frame-sub">Needs 3 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="ecu" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🔍</div>
+              <div class="sf-frame-label">ECU / Insert</div>
+              <div class="sf-frame-sub">Prop detail</div>
+            </button>
+          </div>
+          <!-- Multi-figure role order hint — shown when 2+ characters are
+               selected and an OS/Two Shot/Three Shot frame is active. Click
+               order on the asset chips sets the role: 1st selected = the
+               foreground/anchor figure (soft focus in OS), 2nd (and 3rd for
+               Three Shot) = the sharp subject(s). -->
+          <div id="sf-role-order-hint" style="display:none"></div>
+          <!-- OS frame-side control — which side of the frame the sharp/
+               camera-facing subject is on. Found missing via testing
+               2026-06-29: without this, the model picked frame-left/right
+               for both figures arbitrarily, and the camera-facing figure
+               had no scale instruction so it rendered full-figure instead
+               of properly cropped/distant for an OTS shot. Only shown for
+               frame=os; see setSFOSSide() / renderSFOSSideControl() in
+               02-singleframe.js. -->
+          <div id="sf-os-side-control" style="display:none"></div>
+          <!-- Auto-inject banner -->
+          <div id="sf-auto-inject-banner" style="display:none">
+            <div class="sf-auto-banner">
+              <span class="sf-auto-label">Auto-added for this frame</span>
+              <div id="sf-auto-inject-chips" class="sf-auto-chips"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHOT ANGLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Shot Angle</div>
+          <div class="sf-chips single-select" id="sf-angle-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="eye level" onclick="toggleSFChip(this,'angle',true)">Eye Level</button><span class="chip-tip">Camera at subject's eye height. Natural, neutral — the way we normally see the world.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="low angle" onclick="toggleSFChip(this,'angle',true)">Low Angle</button><span class="chip-tip">Camera below the subject looking up. Makes the subject appear powerful, dominant, larger than life.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="high angle" onclick="toggleSFChip(this,'angle',true)">High Angle</button><span class="chip-tip">Camera above the subject looking down. Makes the subject appear smaller, vulnerable, or observed.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="bird's eye view" onclick="toggleSFChip(this,'angle',true)">Bird's Eye</button><span class="chip-tip">Directly overhead, looking straight down. Reveals layout and pattern. Subject becomes part of environment.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="over-the-shoulder" onclick="toggleSFChip(this,'angle',true)">Over-Shoulder</button><span class="chip-tip">Camera behind one character, facing another. Classic dialogue and confrontation framing.</span></span>
+            <span class="sf-chip-wrap">
+              <button class="sf-chip" id="sf-dutch-angle-chip" onclick="toggleDutchAngle(this)">Dutch Angle</button>
+              <span class="chip-tip">Camera tilted on its axis — creates unease, tension, or disorientation. Can combine with any vertical angle.</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- LAYER 6: ASPECT RATIO -->
+        <div class="sf-section">
+          <div class="sf-section-label">Aspect Ratio</div>
+          <div class="sf-ratio-cards" id="sf-ratio-cards">
+            <button class="sf-ratio-card" data-val="21:9" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-21-9"></div>
+              <div class="sf-ratio-label">21:9</div>
+              <div class="sf-ratio-sub">Cinematic</div>
+            </button>
+            <button class="sf-ratio-card" data-val="16:9" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-16-9"></div>
+              <div class="sf-ratio-label">16:9</div>
+              <div class="sf-ratio-sub">Landscape</div>
+            </button>
+            <button class="sf-ratio-card" data-val="9:16" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-9-16"></div>
+              <div class="sf-ratio-label">9:16</div>
+              <div class="sf-ratio-sub">Portrait</div>
+            </button>
+            <button class="sf-ratio-card" data-val="1:1" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-1-1"></div>
+              <div class="sf-ratio-label">1:1</div>
+              <div class="sf-ratio-sub">Square</div>
+            </button>
+            <button class="sf-ratio-card" data-val="4:5" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-4-5"></div>
+              <div class="sf-ratio-label">4:5</div>
+              <div class="sf-ratio-sub">Social</div>
+            </button>
+            <button class="sf-ratio-card" data-val="3:2" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-3-2"></div>
+              <div class="sf-ratio-label">3:2</div>
+              <div class="sf-ratio-sub">Classic</div>
+            </button>
+            <button class="sf-ratio-card" data-val="2:3" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-2-3"></div>
+              <div class="sf-ratio-label">2:3</div>
+              <div class="sf-ratio-sub">Tall</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- LAYER 7 & 8: WARDROBE & MATERIAL -->
+        <div class="sf-section">
+          <div class="sf-section-label">Wardrobe & Props <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('wardrobe')">⊕</button></div>
+          <div class="sf-chips" id="sf-wardrobe-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-wardrobe-text"
+              placeholder="Specific costume, fabric, accessories, props in hand — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-wardrobe-text','sf-at-picker-wardrobe','sf-at-list-wardrobe')"
+              onkeydown="onSFFieldKeydown(event,'sf-wardrobe-text','sf-at-picker-wardrobe','sf-at-list-wardrobe')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-wardrobe" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-wardrobe"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Material Condition</div>
+          <div class="sf-chips single-select" id="sf-condition-chips">
+            <button class="sf-chip" data-val="pristine" onclick="toggleSFChip(this,'condition',true)">Pristine</button>
+            <button class="sf-chip" data-val="well-maintained" onclick="toggleSFChip(this,'condition',true)">Well-maintained</button>
+            <button class="sf-chip" data-val="lightly worn" onclick="toggleSFChip(this,'condition',true)">Lightly Worn</button>
+            <button class="sf-chip" data-val="battle-worn" onclick="toggleSFChip(this,'condition',true)">Battle-worn</button>
+            <button class="sf-chip" data-val="aged" onclick="toggleSFChip(this,'condition',true)">Aged</button>
+            <button class="sf-chip" data-val="decayed" onclick="toggleSFChip(this,'condition',true)">Decayed</button>
+            <button class="sf-chip" data-val="mud-caked" onclick="toggleSFChip(this,'condition',true)">Mud-caked</button>
+            <button class="sf-chip" data-val="rain-soaked" onclick="toggleSFChip(this,'condition',true)">Rain-soaked</button>
+          </div>
+        </div>
+
+        <!-- LAYER 9: ENVIRONMENT -->
+        <div class="sf-section">
+          <div class="sf-section-label">Environment <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('env')">⊕</button></div>
+          <div class="sf-chips" id="sf-env-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-env-text"
+              placeholder="Setting, location — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-env-text','sf-at-picker-env','sf-at-list-env')"
+              onkeydown="onSFFieldKeydown(event,'sf-env-text','sf-at-picker-env','sf-at-list-env')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-env" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-env"></div>
+            </div>
+          </div>
+          <!-- Camera faces (Shot Setup Single Frame port, phase 1 —
+               2026-07-10). Populated by sfCameraFacingInnerHTML() (02-
+               singleframe.js), refreshed from updatePrompt(). Empty/hidden
+               unless a location with directions[] is selected via the chip
+               selector above or @-mentioned in Subject/Environment text. -->
+          <div id="sf-camera-facing-wrap"></div>
+        </div>
+
+        <!-- LAYER 10 & 11: LIGHTING -->
+        <div class="sf-section">
+          <div class="sf-section-label">Lighting Setup</div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin-bottom:6px;font-style:italic;">Technique</div>
+          <div class="sf-chips single-select" id="sf-lighting-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Rembrandt lighting" onclick="toggleSFChip(this,'lighting-setup',true)">Rembrandt</button><span class="chip-tip">Warm triangle of light on one cheek, the other side falls into shadow. Classic portrait drama.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="rim lighting" onclick="toggleSFChip(this,'lighting-setup',true)">Rim Light</button><span class="chip-tip">Light source behind the subject creates a glowing outline edge. Subject pops from background.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="window light, soft directional from single source" onclick="toggleSFChip(this,'lighting-setup',true)">Window Light</button><span class="chip-tip">Soft, directional natural light from a single side. Gentle shadows, intimate feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="three-point lighting setup" onclick="toggleSFChip(this,'lighting-setup',true)">Three-Point</button><span class="chip-tip">Key light + fill light + rim light. Standard professional setup — balanced, clear, no harsh shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="practical light sources only — candles, fire, oil lamps" onclick="toggleSFChip(this,'lighting-setup',true)">Practical Only</button><span class="chip-tip">All light comes from visible sources in the scene — candles, fire, lamps. No artificial fill.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="volumetric light rays, god rays through atmosphere" onclick="toggleSFChip(this,'lighting-setup',true)">Volumetric</button><span class="chip-tip">Visible light beams cutting through dust, smoke or mist. Often called god rays.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="split lighting — half face lit, half in shadow" onclick="toggleSFChip(this,'lighting-setup',true)">Split</button><span class="chip-tip">Exactly half the face lit, the other half in complete shadow. High drama, intense mood.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="butterfly lighting — light from directly above" onclick="toggleSFChip(this,'lighting-setup',true)">Butterfly</button><span class="chip-tip">Light directly above the face creates a small butterfly-shaped shadow under the nose. Glamorous look.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="golden divine light emanating from subject" onclick="toggleSFChip(this,'lighting-setup',true)">Divine Light</button><span class="chip-tip">Warm golden glow emanating from or around the subject. Used in spiritual and devotional scenes.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="dramatic storm light — low-angle breaks in dark clouds, violent lightning" onclick="toggleSFChip(this,'lighting-setup',true)">Storm Light</button><span class="chip-tip">Low-angle breaks in dark clouds create harsh dramatic shafts. High contrast, electric atmosphere.</span></span>
+          </div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin:8px 0 6px;font-style:italic;">Natural & Environmental</div>
+          <div class="sf-chips single-select" id="sf-lighting-natural-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="bright daylight, strong direct sunlight, crisp shadows, high visibility" onclick="toggleSFChip(this,'lighting-natural',true)">Bright Daylight</button><span class="chip-tip">Strong, clear sunlight with crisp defined shadows. Colours vivid and saturated. High energy feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="overcast sky, diffused even light, flat soft shadows, natural colour balance" onclick="toggleSFChip(this,'lighting-natural',true)">Overcast</button><span class="chip-tip">Clouds act as a giant softbox. Even, flattering light from all directions. No harsh shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="hazy sun, soft warm glow through thin clouds, gentle shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Hazy Sun</button><span class="chip-tip">Sun visible but softened by thin cloud or haze. Warm diffused glow, gentle shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="harsh midday sun, overhead light, short dark shadows, high contrast" onclick="toggleSFChip(this,'lighting-natural',true)">Harsh Midday</button><span class="chip-tip">Overhead sun creates unflattering short shadows and high contrast. Raw, unforgiving, intense feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="dappled forest light, sunlight filtering through tree canopy" onclick="toggleSFChip(this,'lighting-natural',true)">Dappled Forest</button><span class="chip-tip">Sunlight breaking through leaves creates patches of light and shadow. Magical, natural, layered.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="foggy misty atmosphere, diffused ambient light, reduced visibility, ethereal" onclick="toggleSFChip(this,'lighting-natural',true)">Foggy / Misty</button><span class="chip-tip">Moisture in the air scatters light, softening everything. Mysterious, atmospheric, dreamlike.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="backlit silhouette, strong light source directly behind subject, subject in shadow" onclick="toggleSFChip(this,'lighting-natural',true)">Backlit Silhouette</button><span class="chip-tip">Light source behind the subject puts them in shadow. Dramatic outline, subject becomes a shape.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="candlelit interior, warm flickering amber light, deep surrounding shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Candlelit Interior</button><span class="chip-tip">Warm, intimate, flickering amber light. Deep shadows beyond the flame. Ancient, personal feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="neon night, mixed coloured artificial light sources, urban night atmosphere" onclick="toggleSFChip(this,'lighting-natural',true)">Neon Night</button><span class="chip-tip">City at night lit by neon signs and artificial lights. Coloured reflections on wet surfaces. Cyberpunk or noir feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="blue hour, post-sunset deep blue sky, balanced ambient and artificial light" onclick="toggleSFChip(this,'lighting-natural',true)">Blue Hour</button><span class="chip-tip">The 20 minutes after sunset when the sky turns deep blue. Cool tones, serene mood, city lights begin to glow.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="fire glow, warm orange-red light from open flame, dancing shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Fire Glow</button><span class="chip-tip">Open fire as primary light source. Warm orange-red tones, moving shadows, primal atmosphere.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="moonlit night, cold blue-white ambient light, long soft shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Moonlit</button><span class="chip-tip">Moonlight casts a cold, blue-white ambient glow. Quiet, ethereal, mysterious night atmosphere.</span></span>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Time of Day</div>
+          <div class="sf-chips single-select" id="sf-tod-chips">
+            <button class="sf-chip" data-val="dawn — soft pink-gold horizon light, long shadows, cool air haze" data-label="Dawn" onclick="toggleSFChip(this,'tod',true)">Dawn</button>
+            <button class="sf-chip" data-val="early morning — low warm directional light, long soft shadows" data-label="Early Morning" onclick="toggleSFChip(this,'tod',true)">Early Morning</button>
+            <button class="sf-chip" data-val="late morning — bright warm illumination, even spread, minimal shadows" data-label="Late Morning" onclick="toggleSFChip(this,'tod',true)">Late Morning</button>
+            <button class="sf-chip" data-val="harsh overhead midday light, short dark shadows, high contrast" data-label="Midday" onclick="toggleSFChip(this,'tod',true)">Midday</button>
+            <button class="sf-chip" data-val="golden hour — warm amber directional light, long shadows, rim lighting" data-label="Golden Hour" onclick="toggleSFChip(this,'tod',true)">Golden Hour</button>
+            <button class="sf-chip" data-val="dusk — deep orange-red horizon, dramatic silhouettes, warm-cool split" data-label="Dusk" onclick="toggleSFChip(this,'tod',true)">Dusk</button>
+            <button class="sf-chip" data-val="night — artificial light sources, deep shadows, high contrast pools of light" data-label="Night" onclick="toggleSFChip(this,'tod',true)">Night</button>
+            <button class="sf-chip" data-val="overcast — diffused even light, soft shadows, natural colour balance" data-label="Overcast" onclick="toggleSFChip(this,'tod',true)">Overcast</button>
+          </div>
+        </div>
+
+        <!-- LAYER 12 & 13: CAMERA -->
+        <div class="sf-section">
+          <div class="sf-section-label">Camera & Lens <span class="sf-label-hint">auto-suggested by frame + mood</span></div>
+          <div id="sf-camera-auto" class="sf-camera-auto-display" style="display:none"></div>
+          <div class="sf-chips" id="sf-lens-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="14-24mm ultra-wide lens" onclick="toggleSFChip(this,'lens',true)">14–24mm Ultra-wide</button><span class="chip-tip">Very wide field of view. Dramatic perspective, slight distortion at edges. Great for environments and action.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="35mm lens" onclick="toggleSFChip(this,'lens',true)">35mm</button><span class="chip-tip">Natural wide view close to human eye. Street photography and documentary standard. Subject + environment together.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="50mm standard lens" onclick="toggleSFChip(this,'lens',true)">50mm Standard</button><span class="chip-tip">Closest to what the human eye sees. Versatile, natural perspective, no distortion.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="85mm portrait lens" onclick="toggleSFChip(this,'lens',true)">85mm Portrait</button><span class="chip-tip">The classic portrait lens. Flattering compression, beautiful background blur. Ideal for head and shoulders.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="100mm medium telephoto" onclick="toggleSFChip(this,'lens',true)">100mm Telephoto</button><span class="chip-tip">Compressed perspective, background pushed further away. Great for face close-ups without distortion.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="200mm telephoto compression" onclick="toggleSFChip(this,'lens',true)">200mm+</button><span class="chip-tip">Extreme compression — background appears very close to subject. Isolating, cinematic, distant subject feel.</span></span>
+          </div>
+          <div class="sf-chips" id="sf-aperture-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/1.4 — extreme shallow depth of field, creamy bokeh" onclick="toggleSFChip(this,'aperture',true)">f/1.4 Bokeh</button><span class="chip-tip">Only the subject is sharp — background melts into soft blurry circles. Maximum subject isolation.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/2.8 — shallow depth of field, subject separation" onclick="toggleSFChip(this,'aperture',true)">f/2.8</button><span class="chip-tip">Subject sharp, background softly blurred. The standard portrait and cinema look.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/5.6 — moderate depth" onclick="toggleSFChip(this,'aperture',true)">f/5.6</button><span class="chip-tip">Subject and near-background both reasonably sharp. Balanced depth, versatile.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/8 — deep focus, sharp throughout" onclick="toggleSFChip(this,'aperture',true)">f/8 Deep</button><span class="chip-tip">Almost everything in frame is sharp. Good for environments where location detail matters.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/11 — maximum depth of field, everything sharp" onclick="toggleSFChip(this,'aperture',true)">f/11 Max</button><span class="chip-tip">Everything from foreground to background is in sharp focus. Landscape and wide shot standard.</span></span>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Camera Brand / Film Stock</div>
+          <div class="sf-chips single-select" id="sf-camera-brand-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Hasselblad, HNCS colour science, medium format" onclick="toggleSFChip(this,'camera',true)">Hasselblad</button><span class="chip-tip">Medium format camera. Exceptional tonal range, rich colours, fine detail. High-end fashion and portrait standard.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Leica, film-inspired, rich shadows" onclick="toggleSFChip(this,'camera',true)">Leica</button><span class="chip-tip">Film-inspired look, rich shadows, reportage feeling. Slightly warmer and more organic than digital.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Sony A7, clinical sharpness, high resolution" onclick="toggleSFChip(this,'camera',true)">Sony A7</button><span class="chip-tip">Clinical, ultra-sharp, neutral colour. Crisp detail without warmth. Modern and precise.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Canon, warm skin tones, smooth gradation" onclick="toggleSFChip(this,'camera',true)">Canon</button><span class="chip-tip">Known for flattering warm skin tones and smooth colour gradation. Pleasing and natural.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on ARRI Alexa, cinema standard, filmic latitude" onclick="toggleSFChip(this,'camera',true)">ARRI Alexa</button><span class="chip-tip">The gold standard cinema camera. Hollywood filmic look — wide dynamic range, cinematic colour science.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="35mm film, Kodak Portra, warm skin, natural grain" onclick="toggleSFChip(this,'camera',true)">Kodak Portra</button><span class="chip-tip">Classic 35mm film stock. Warm skin tones, natural grain, slightly faded highlights. Nostalgic feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Fuji Velvia film stock, saturated, vivid landscape" onclick="toggleSFChip(this,'camera',true)">Fuji Velvia</button><span class="chip-tip">Film stock known for punchy, saturated colours. Landscapes and nature pop. Vivid and bold.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Ilford HP5 black and white film, grain, reportage" onclick="toggleSFChip(this,'camera',true)">Ilford HP5 B&amp;W</button><span class="chip-tip">Classic black and white film. Fine grain, documentary feel. Timeless reportage photography look.</span></span>
+          </div>
+        </div>
+
+        <!-- LAYER 14: MOOD & STYLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Mood & Emotional State <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('mood')">⊕</button></div>
+          <div class="sf-chips" id="sf-mood-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="serene authority" onclick="toggleSFChip(this,'mood')">Serene Authority</button><span class="chip-tip">Calm, commanding presence. Power without aggression. The subject owns the space quietly.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="quiet wisdom" onclick="toggleSFChip(this,'mood')">Quiet Wisdom</button><span class="chip-tip">Thoughtful, knowing expression. The look of someone who has seen much and speaks little.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="divine radiance" onclick="toggleSFChip(this,'mood')">Divine Radiance</button><span class="chip-tip">Luminous, otherworldly glow. Used in spiritual and devotional imagery.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="fierce devotion" onclick="toggleSFChip(this,'mood')">Fierce Devotion</button><span class="chip-tip">Intense, passionate focus directed toward something sacred or beloved.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="transcendent calm" onclick="toggleSFChip(this,'mood')">Transcendent Calm</button><span class="chip-tip">Beyond ordinary peace — the stillness of deep meditation or spiritual realisation.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="inner fire" onclick="toggleSFChip(this,'mood')">Inner Fire</button><span class="chip-tip">Determination burning beneath a composed exterior. Intensity held in check.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="battle fury" onclick="toggleSFChip(this,'mood')">Battle Fury</button><span class="chip-tip">Raw, unleashed aggression in the midst of combat. Primal and explosive.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="exhausted but defiant" onclick="toggleSFChip(this,'mood')">Defiant</button><span class="chip-tip">Pushed to the limit but refusing to yield. Physical exhaustion, unbroken spirit.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="meditative absorption" onclick="toggleSFChip(this,'mood')">Meditative</button><span class="chip-tip">Completely absorbed inward. Eyes may be closed or unfocused. Deep stillness.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="sacred awe" onclick="toggleSFChip(this,'mood')">Sacred Awe</button><span class="chip-tip">Overwhelmed by something greater than oneself. Reverence mixed with wonder.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="candid, unposed, raw authenticity" onclick="toggleSFChip(this,'mood')">Candid</button><span class="chip-tip">Unaware of the camera. Natural, unguarded moment. Documentary and street photography feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="whimsical and wonder-filled" onclick="toggleSFChip(this,'mood')">Whimsical</button><span class="chip-tip">Playful, light, magical. The world seen through curious, delighted eyes.</span></span>
+          </div>
+          <!-- Genre+frame combination mood chips load here -->
+          <div class="sf-chips" id="sf-mood-extra-chips"></div>
+          <textarea class="input sf-textarea" id="sf-mood-text" placeholder="Describe the emotional atmosphere or style…" rows="2"></textarea>
+        </div>
+
+        <!-- LAYER 15: SIGNATURE TECHNIQUES -->
+        <div class="sf-section">
+          <div class="sf-section-label">Signature Techniques</div>
+          <div class="sf-toggles-grid" id="sf-sig-toggles">
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-dual-light" onchange="sfState.sigs['dual-light']=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Dual Light Temperature</span>
+                <span class="sf-toggle-switch-desc">Warm subject / cold environment</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-sss" onchange="sfState.sigs.sss=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Subsurface Scattering</span>
+                <span class="sf-toggle-switch-desc">Light through skin</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-particles" onchange="sfState.sigs.particles=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Airborne Particles</span>
+                <span class="sf-toggle-switch-desc">Dust, rain, snow, petals, embers</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-practical" onchange="sfState.sigs.practical=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Practical Light Sources Only</span>
+                <span class="sf-toggle-switch-desc">Candles, fire, lamps only</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-wind" onchange="sfState.sigs.wind=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Wind-Blown Hair Physics</span>
+                <span class="sf-toggle-switch-desc">Individual strand simulation</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-frozen" onchange="sfState.sigs.frozen=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Frozen Motion Frame</span>
+                <span class="sf-toggle-switch-desc">High-speed freeze, suspended dynamics</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- LAYER 16: QUALITY & RENDER -->
+        <div class="sf-section">
+          <div class="sf-section-label">Quality & Render</div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin-bottom:6px;font-style:italic;">Render Style</div>
+          <div class="sf-chips" id="sf-quality-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="photorealistic" onclick="toggleSFChip(this,'quality')">Photorealistic</button><span class="chip-tip">Looks like a real photograph. No painterly or illustrated qualities.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="ultra-detailed textures" onclick="toggleSFChip(this,'quality')">Ultra-detailed</button><span class="chip-tip">Every surface — fabric, skin, stone — rendered with maximum texture and fine detail.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="natural film grain" onclick="toggleSFChip(this,'quality')">Film Grain</button><span class="chip-tip">Adds the subtle texture of real film photography. Organic, slightly nostalgic feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="UE5 cinematic render" onclick="toggleSFChip(this,'quality')">UE5 Cinematic</button><span class="chip-tip">Unreal Engine 5 quality. Used for epic game cinematics and VFX-level photorealism.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="VFX film production still" onclick="toggleSFChip(this,'quality')">VFX Production</button><span class="chip-tip">Hollywood visual effects quality. The look of a frame pulled from a major film production.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="photogrammetry-level surface detail" onclick="toggleSFChip(this,'quality')">Photogrammetry</button><span class="chip-tip">Surfaces scanned with scientific precision — every crack, pore, and texture physically accurate.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="IMAX-level detail" onclick="toggleSFChip(this,'quality')">IMAX Detail</button><span class="chip-tip">Extreme resolution and sharpness throughout the frame. No soft areas, no compression artefacts.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="watercolour illustration, hand-painted" onclick="toggleSFChip(this,'quality')">Watercolour</button><span class="chip-tip">Soft, flowing painted look. Colours bleed at edges. Artistic, not photographic.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="storybook illustration style" onclick="toggleSFChip(this,'quality')">Storybook</button><span class="chip-tip">Warm, illustrated look suited to children's books or animated features. Friendly and expressive.</span></span>
+          </div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin:8px 0 6px;font-style:italic;">Power Boosters <span style="font-size:0.65rem;background:var(--amber-bg);color:var(--amber);border-radius:3px;padding:1px 5px;margin-left:4px;">community-proven</span></div>
+          <div class="sf-chips" id="sf-power-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="8K resolution" onclick="toggleSFChip(this,'quality')">8K Resolution</button><span class="chip-tip">Signals maximum detail and sharpness to the AI engine. Community-proven prompt booster.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="real life, true to life, lifelike" onclick="toggleSFChip(this,'quality')">Real Life</button><span class="chip-tip">Reinforces photographic realism. Pushes the engine away from illustrated or stylised output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="subsurface scattering, light through skin" onclick="toggleSFChip(this,'quality')">Subsurface</button><span class="chip-tip">Light penetrating and scattering through skin — the key technique that makes human skin look real, not plastic.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="depth of field mastery, perfect bokeh" onclick="toggleSFChip(this,'quality')">DOF Mastery</button><span class="chip-tip">Signals precise, controlled depth of field. Sharp subject, intentional blur — not accidental softness.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="hyperrealistic, indistinguishable from photograph" onclick="toggleSFChip(this,'quality')">Hyperrealistic</button><span class="chip-tip">One level beyond photorealistic — every detail so precise it's impossible to tell from a real photograph.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="cinematic colour grading, professional colour science" onclick="toggleSFChip(this,'quality')">Cinematic Grade</button><span class="chip-tip">Professional colour grading as seen in feature films. Controlled tones, intentional palette, not raw camera output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="physically accurate lighting, real-world light behaviour" onclick="toggleSFChip(this,'quality')">Physically Accurate</button><span class="chip-tip">Light behaves exactly as it does in the real world — falloff, reflection, refraction, shadow softness all correct.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="award-winning photography" onclick="toggleSFChip(this,'quality')">Award-Winning</button><span class="chip-tip">Signals compositional and technical excellence. Pushes the engine toward its highest-quality output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="masterpiece, highest quality" onclick="toggleSFChip(this,'quality')">Masterpiece</button><span class="chip-tip">A widely-used community booster. Pushes the engine toward its best possible output for this prompt.</span></span>
+          </div>
+        </div>
+
+        <!-- LAYER 17: NEGATIVE PROMPTS -->
+        <div class="sf-section">
+          <div class="sf-section-label">Negative Prompts <span class="sf-label-hint" id="sf-neg-platform-hint">platform-aware format</span></div>
+          <div class="sf-chips" id="sf-neg-chips">
+            <button class="sf-chip" data-val="modern elements" onclick="toggleSFChip(this,'neg')">No Modern</button>
+            <button class="sf-chip" data-val="synthetic fabrics" onclick="toggleSFChip(this,'neg')">No Synthetic</button>
+            <button class="sf-chip" data-val="power lines" onclick="toggleSFChip(this,'neg')">No Power Lines</button>
+            <button class="sf-chip" data-val="cartoon style" onclick="toggleSFChip(this,'neg')">No Cartoon</button>
+            <button class="sf-chip" data-val="plastic skin" onclick="toggleSFChip(this,'neg')">No Plastic Skin</button>
+            <button class="sf-chip" data-val="HDR processing" onclick="toggleSFChip(this,'neg')">No HDR</button>
+            <button class="sf-chip" data-val="watermark" onclick="toggleSFChip(this,'neg')">No Watermark</button>
+            <button class="sf-chip" data-val="distorted proportions" onclick="toggleSFChip(this,'neg')">No Distortion</button>
+            <button class="sf-chip" data-val="merged fingers" onclick="toggleSFChip(this,'neg')">No Merged Fingers</button>
+            <button class="sf-chip" data-val="extra limbs" onclick="toggleSFChip(this,'neg')">No Extra Limbs</button>
+            <button class="sf-chip" data-val="western fantasy aesthetic" onclick="toggleSFChip(this,'neg')">No Western Fantasy</button>
+            <button class="sf-chip" data-val="flat lighting" onclick="toggleSFChip(this,'neg')">No Flat Lighting</button>
+          </div>
+          <textarea class="input sf-textarea" id="sf-neg-text" placeholder="Add custom negatives…" rows="2"></textarea>
+        </div>
+
+        <!-- MOTION LAYER (shown when Motion Poster selected) -->
+        <div id="sf-motion-layer" style="display:none">
+          <div class="sf-section-label sf-section-divider-label">Motion Poster Settings</div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Element</div>
+            <div class="sf-chips single-select" id="sf-motion-element-chips">
+              <button class="sf-chip" data-val="hair" onclick="toggleSFChip(this,'motion-element',true)">Hair</button>
+              <button class="sf-chip" data-val="fire" onclick="toggleSFChip(this,'motion-element',true)">Fire</button>
+              <button class="sf-chip" data-val="fabric / clothing" onclick="toggleSFChip(this,'motion-element',true)">Fabric</button>
+              <button class="sf-chip" data-val="background environment" onclick="toggleSFChip(this,'motion-element',true)">Background</button>
+              <button class="sf-chip" data-val="particles" onclick="toggleSFChip(this,'motion-element',true)">Particles</button>
+              <button class="sf-chip" data-val="water / rain" onclick="toggleSFChip(this,'motion-element',true)">Water / Rain</button>
+              <button class="sf-chip" data-val="smoke / mist" onclick="toggleSFChip(this,'motion-element',true)">Smoke / Mist</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Type</div>
+            <div class="sf-chips single-select" id="sf-motion-type-chips">
+              <button class="sf-chip" data-val="loop" onclick="toggleSFChip(this,'motion-type',true)">Loop</button>
+              <button class="sf-chip" data-val="bounce" onclick="toggleSFChip(this,'motion-type',true)">Bounce</button>
+              <button class="sf-chip" data-val="drift" onclick="toggleSFChip(this,'motion-type',true)">Drift</button>
+              <button class="sf-chip" data-val="pulse" onclick="toggleSFChip(this,'motion-type',true)">Pulse</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Intensity</div>
+            <div class="sf-chips single-select" id="sf-motion-intensity-chips">
+              <button class="sf-chip" data-val="subtle" onclick="toggleSFChip(this,'motion-intensity',true)">Subtle</button>
+              <button class="sf-chip" data-val="moderate" onclick="toggleSFChip(this,'motion-intensity',true)">Moderate</button>
+              <button class="sf-chip" data-val="dramatic" onclick="toggleSFChip(this,'motion-intensity',true)">Dramatic</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Duration</div>
+            <div class="sf-chips single-select" id="sf-motion-duration-chips">
+              <button class="sf-chip" data-val="2 seconds" onclick="toggleSFChip(this,'motion-duration',true)">2s</button>
+              <button class="sf-chip" data-val="3 seconds" onclick="toggleSFChip(this,'motion-duration',true)">3s</button>
+              <button class="sf-chip" data-val="5 seconds" onclick="toggleSFChip(this,'motion-duration',true)">5s</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYER 18: PLATFORM SELECTOR -->
+        <div class="sf-section sf-platform-section">
+          <div class="sf-section-label">Output Platform</div>
+          <div class="sf-platform-cards" id="sf-platform-cards">
+            <button class="sf-platform-card" data-val="mj" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Midjourney</div>
+              <div class="sf-platform-caps">Still Image</div>
+            </button>
+            <button class="sf-platform-card active" data-val="nb" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Nano Banana Pro</div>
+              <div class="sf-platform-caps">Still · Motion · Storyboard</div>
+            </button>
+            <button class="sf-platform-card" data-val="gpt" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">GPT Image-2</div>
+              <div class="sf-platform-caps">Still · Motion · Storyboard</div>
+            </button>
+            <button class="sf-platform-card" data-val="kling" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Kling Image 3.0</div>
+              <div class="sf-platform-caps">Still only</div>
+            </button>
+          </div>
+          <div id="sf-platform-warning" class="sf-platform-warning" style="display:none"></div>
+        </div>
+
+      </div><!-- /sf-stack -->
+    </div><!-- /sf-left -->
+
+    <!-- RIGHT: Output Panel -->
+    <div class="sf-right" id="sf-right">
+      <div class="sf-output-panel">
+
+        <!-- Richness indicator -->
+        <div class="sf-richness-row">
+          <span class="sf-richness-label">Prompt Richness</span>
+          <div class="sf-richness-dots" id="sf-richness-dots">
+            <span class="sf-dot" data-i="1"></span>
+            <span class="sf-dot" data-i="2"></span>
+            <span class="sf-dot" data-i="3"></span>
+            <span class="sf-dot" data-i="4"></span>
+            <span class="sf-dot" data-i="5"></span>
+          </div>
+          <span class="sf-richness-text" id="sf-richness-text">Minimal</span>
+        </div>
+
+        <!-- Platform badge -->
+        <div class="sf-output-header">
+          <div class="sf-output-platform-badge" id="sf-output-platform-badge">Nano Banana Pro</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="sf-auto-toggle-btn" id="sf-auto-toggle" onclick="toggleAutoView()" title="Show/hide auto-additions">Show auto-adds</button>
+            <button class="btn btn-primary btn-sm" onclick="copyPrompt()" id="sf-copy-btn">Copy Prompt</button>
+            <button class="btn btn-secondary btn-sm" id="sf-save-seq-btn" onclick="sfSaveToSequence()" title="Save this prompt as a shot in a Sequence" style="display:none">💾 Save to Sequence</button>
+          </div>
+        </div>
+
+        <!-- Prompt output -->
+        <div class="sf-prompt-box" id="sf-prompt-box">
+          <div class="sf-prompt-empty">Select options on the left to build your prompt.</div>
+        </div>
+
+        <!-- Platform params (shown separately) -->
+        <div id="sf-params-box" style="display:none">
+          <div class="sf-params-label">Platform Parameters</div>
+          <div class="sf-params-value" id="sf-params-value"></div>
+        </div>
+
+        <!-- Auto-additions detail (hidden by default) -->
+        <div id="sf-auto-detail" style="display:none">
+          <div class="sf-params-label">Auto-added <span style="color:var(--amber)">(prerequisite engine)</span></div>
+          <div class="sf-auto-detail-value" id="sf-auto-detail-value"></div>
+        </div>
+
+        <!-- Prompt tips for active platform -->
+        <div class="sf-platform-tips" id="sf-platform-tips"></div>
+
+      </div>
+    </div><!-- /sf-right -->
+
+  </div><!-- /sf-layout -->
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: STORYBOARD                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-storyboard" class="view">
+  <div class="page-wrap">
+
+    <!-- No project state -->
+    <div id="sb-no-project" style="display:none">
+      <div class="coming-soon-view">
+        <div class="cs-icon">🎬</div>
+        <h2>Create a project first</h2>
+        <p>Add characters and locations to your library — they'll be available for every panel.</p>
+        <button class="btn btn-primary" onclick="openProjectManager(true)">＋ Create Project</button>
+      </div>
+    </div>
+
+    <!-- Storyboard content -->
+    <div id="sb-content">
+
+      <!-- STORYBOARD ONBOARDING BANNER -->
+      <div class="sb-onboarding-banner" id="sb-onboarding-banner" style="display:none">
+        <div class="sb-onboarding-title">🎬 How to use Storyboard</div>
+        <div class="sb-onboarding-steps">
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">1</span><span>Add your <strong>Characters and Locations</strong> to the Library first — use <strong>@name</strong> to reference them in your story.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">2</span><span>Write your story in the text area. Each sentence becomes a panel beat. Mention characters and locations by name.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">3</span><span>Set your <strong>Platform</strong>, choose how many panels, and optionally add a <strong>Visual Style</strong> that travels to every panel.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">4</span><span>Click <strong>Generate Storyboard</strong>. The app assigns shots, infers compositions, and builds cinematic prompts for each panel.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">5</span><span>Review each panel's <strong>Composition</strong> block — edit it to adjust the spatial layout. The prompt updates live.</span></div>
+        </div>
+        <div class="sb-onboarding-extras">
+          <span class="sb-onboarding-tip">✦ <strong>Enable Smart Split</strong> in Settings for director-level shot assignments via Claude API.</span>
+          <span class="sb-onboarding-tip">✦ <strong>Spatial Context</strong> on your Location asset improves shot accuracy.</span>
+        </div>
+        <button class="sb-onboarding-dismiss" onclick="dismissSBOnboarding()" title="Dismiss">✕</button>
+      </div>
+
+      <!-- STEP 1: Story Input -->
+      <div id="sb-step1" class="sb-step">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Sequence / Storyboard</h1>
+            <p class="page-subtitle">Write your story using @mentions to link library assets. The app handles the rest.</p>
+          </div>
+        </div>
+
+        <!-- Step 1: Story text with @ mentions -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 1 — Write Your Story</div>
+          <p class="sb-card-hint">Write naturally. Use <strong>@name</strong> to link a library asset — character, location, prop, era. Type @ to see your library. Anything without an @ tag will be described by the AI.</p>
+          <!-- Story textarea wrapper for @ picker positioning -->
+          <div class="sb-story-wrap" id="sb-story-wrap">
+            <div class="sb-story-display" id="sb-story-display"></div>
+            <textarea class="input sb-story-input" id="sb-story-text"
+              placeholder="e.g. @Raju is walking through @cityBg. He looks up and sees a @bird circling overhead…"
+              rows="7"
+              oninput="onSBStoryInput(event)"
+              onkeydown="onSBStoryKeydown(event)"
+              onfocus="analyseUnlinked(this.value)"
+            ></textarea>
+            <!-- @ picker dropdown -->
+            <div class="sb-at-picker" id="sb-at-picker" style="display:none">
+              <div class="sb-at-picker-list" id="sb-at-picker-list"></div>
+            </div>
+          </div>
+          <!-- Unlinked element warnings -->
+          <div id="sb-unlinked-warn" class="sb-unlinked-warn" style="display:none"></div>
+        </div>
+
+        <!-- Step 2: Panel config (asset selector removed — @ handles it) -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 2 — Panel Configuration</div>
+          <div class="sb-config-row">
+            <div class="sb-config-group">
+              <div class="sb-config-label">Number of Panels</div>
+              <div class="sb-panel-count-chips">
+                <button class="sf-chip" data-val="3" onclick="setSBPanelCount(this)">3</button>
+                <button class="sf-chip active" data-val="4" onclick="setSBPanelCount(this)">4</button>
+                <button class="sf-chip" data-val="6" onclick="setSBPanelCount(this)">6</button>
+                <button class="sf-chip" data-val="8" onclick="setSBPanelCount(this)">8</button>
+                <button class="sf-chip" data-val="12" onclick="setSBPanelCount(this)">12</button>
+              </div>
+            </div>
+            <div class="sb-config-group">
+              <div class="sb-config-label">Platform</div>
+              <div class="sb-panel-count-chips">
+                <button class="sf-chip active" data-val="nb" onclick="setSBPlatform(this)">Nano Banana Pro</button>
+                <button class="sf-chip" data-val="gpt" onclick="setSBPlatform(this)">GPT Image-2</button>
+                <button class="sf-chip" data-val="kling" onclick="setSBPlatform(this)">Kling Video 3.0</button>
+                <button class="sf-chip sb-mj-disabled" data-val="mj" title="Midjourney does not support storyboards" disabled>Midjourney ✕</button>
+              </div>
+            </div>
+            <div class="sb-config-group">
+              <div class="sb-config-label">Frame Aspect Ratio</div>
+              <div class="sb-panel-count-chips" id="sb-ratio-chips">
+                <button class="sf-chip active" data-val="16:9" onclick="setSBRatio(this)">16:9</button>
+                <button class="sf-chip" data-val="4:3" onclick="setSBRatio(this)">4:3</button>
+                <button class="sf-chip" data-val="1:1" onclick="setSBRatio(this)">1:1</button>
+                <button class="sf-chip" data-val="9:16" onclick="setSBRatio(this)">9:16</button>
+                <button class="sf-chip" data-val="2.39:1" onclick="setSBRatio(this)">2.39:1</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Style preferences -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 3 — Visual Style Preferences <span class="sb-optional">optional</span></div>
+          <div class="sb-style-row">
+            <div class="field">
+              <label class="field-label">Overall Visual Style</label>
+              <input class="input" id="sb-style" placeholder="e.g. epic mythological, documentary realism, dark fantasy">
+            </div>
+            <div class="field">
+              <label class="field-label">Colour Mood</label>
+              <input class="input" id="sb-colour" placeholder="e.g. warm amber tones, desaturated cool, golden hour throughout">
+            </div>
+            <div class="field">
+              <label class="field-label">Camera Style</label>
+              <input class="input" id="sb-camera" placeholder="e.g. handheld documentary, cinematic wide angles, intimate close-ups">
+            </div>
+          </div>
+        </div>
+
+        <!-- API Key for Smart Split -->
+        <div class="sb-card sb-api-card">
+          <div class="sb-card-title">
+            Smart Split
+            <span class="sb-online-badge">✦ Optional · Requires Anthropic API Key</span>
+          </div>
+          <p class="sb-card-hint">Smart Split uses Claude to intelligently break your story into dramatic panel beats. Without it, the app splits by sentence/paragraph (still works well).</p>
+          <div id="sb-api-key-status" style="font-size:0.78rem;color:var(--ink-mid);display:flex;align-items:center;gap:8px;">
+            <span id="sb-api-key-indicator">⬤</span>
+            <span id="sb-api-key-label">No API key set</span>
+            <button class="btn btn-ghost btn-sm" onclick="openSettings()">Configure in Settings →</button>
+          </div>
+        </div>
+
+        <!-- Generate button -->
+        <div class="sb-generate-row">
+          <button class="btn btn-primary sb-generate-btn" id="sb-generate-btn" onclick="generateStoryboard()">
+            Generate Panel Breakdown →
+          </button>
+          <span class="sb-generate-hint" id="sb-generate-hint"></span>
+        </div>
+      </div>
+
+      <!-- STEP 5+: Panel breakdown (shown after generation) -->
+      <div id="sb-step2" style="display:none">
+
+        <!-- Header with back + export -->
+        <div class="sb-panels-header">
+          <div>
+            <div class="sb-panels-title" id="sb-panels-title">Storyboard — 4 Panels</div>
+            <div class="sb-panels-sub" id="sb-panels-platform-badge"></div>
+          </div>
+          <div class="sb-panels-actions">
+            <button class="btn btn-secondary btn-sm" onclick="resetStoryboard()">← Edit Story</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyAllIndividual()">Copy Individual</button>
+            <button class="btn btn-secondary btn-sm" id="sb-copy-grid-btn" onclick="copyAsGrid()">Copy as Grid</button>
+            <button class="btn btn-secondary btn-sm" id="sb-copy-klingvideo-btn" style="display:none" onclick="copyAsKlingMultiShot()">Copy Multi-Shot</button>
+            <button class="btn btn-secondary btn-sm" onclick="sbSaveToSequence()">💾 Save to Sequence</button>
+            <button class="btn btn-primary btn-sm" onclick="saveStoryboardMD()">Save .md</button>
+          </div>
+        </div>
+
+        <!-- Undo bar (hidden until cascade happens) -->
+        <div id="sb-undo-bar" class="sb-undo-bar" style="display:none">
+          <span class="sb-undo-msg" id="sb-undo-msg"></span>
+          <button class="btn btn-secondary btn-sm" onclick="undoCascade()">↩ Undo</button>
+        </div>
+
+        <!-- Panel cards -->
+        <div id="sb-panels-grid" class="sb-panels-grid"></div>
+
+      </div>
+
+    </div><!-- /sb-content -->
+
+  </div><!-- /page-wrap -->
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: ASSET EDITOR                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="asset-modal-overlay" onclick="handleOverlayClick(event, 'asset-modal-overlay')">
+  <div class="modal" id="asset-modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="asset-modal-title">Add Character</h2>
+      <button class="modal-close" onclick="closeModal('asset-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body" id="asset-modal-body">
+      <!-- dynamically populated -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('asset-modal-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Save Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: REFERENCE IMAGE PANEL (v7.2.0 — task #2)             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="reference-panel-overlay" onclick="handleOverlayClick(event, 'reference-panel-overlay')">
+  <div class="modal" id="reference-panel-modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2 class="modal-title">Reference Images per Shot</h2>
+      <button class="modal-close" onclick="closeModal('reference-panel-overlay')">✕</button>
+    </div>
+    <div class="modal-body" id="reference-panel-body" style="max-height:60vh;overflow-y:auto">
+      <!-- dynamically populated by renderReferencePanel() -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="selectAllReferenceImages()">Select All</button>
+      <button class="btn btn-secondary" onclick="closeModal('reference-panel-overlay')">Close</button>
+      <button class="btn btn-primary" onclick="downloadSelectedReferenceImages()">Download Selected (.zip)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: PROJECT MANAGER                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="project-modal-overlay" onclick="handleOverlayClick(event, 'project-modal-overlay')">
+  <div class="modal" id="project-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Projects</h2>
+      <button class="modal-close" onclick="closeModal('project-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="project-list"></div>
+      <div class="section-divider">New Project</div>
+      <div class="field">
+        <label class="field-label" for="new-project-name">Project Name <span class="field-required">*</span></label>
+        <div style="display:flex; gap:8px;">
+          <input class="input" id="new-project-name" placeholder="e.g. Mahabharata — Battle of Kurukshetra" maxlength="80" onkeydown="if(event.key==='Enter') addProject()">
+          <button class="btn btn-primary" onclick="addProject()">Create</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('project-modal-overlay')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: SETTINGS                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="settings-modal-overlay" onclick="handleOverlayClick(event,'settings-modal-overlay')">
+  <div class="modal" id="settings-modal" style="max-width:860px;width:95vw">
+    <div class="modal-header">
+      <h2 class="modal-title">Settings</h2>
+      <button class="modal-close" onclick="closeModal('settings-modal-overlay')">✕</button>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="api" onclick="switchSettingsTab('api')">API Keys</button>
+      <button class="settings-tab" data-tab="vocab" onclick="switchSettingsTab('vocab')">Vocabulary</button>
+      <button class="settings-tab" data-tab="sponsor" onclick="switchSettingsTab('sponsor')">Sponsor</button>
+      <button class="settings-tab" data-tab="backup" onclick="switchSettingsTab('backup')">Backup</button>
+      <button class="settings-tab" data-tab="danger" onclick="switchSettingsTab('danger')">Danger Zone</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ── TAB: API KEYS ──────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-api">
+        <div class="settings-group">
+          <div class="settings-group-title">API Keys</div>
+
+          <!-- Anthropic -->
+          <div class="settings-api-row">
+            <div class="settings-api-label">
+              Anthropic (Claude)
+              <span class="api-badge api-badge-active" id="anthropic-status-badge">No key</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:pointer;font-size:0.75rem;font-weight:500;color:var(--ink-mid);">
+                <input type="checkbox" id="settings-anthropic-active"
+                  onchange="saveApiActive('anthropic', this.checked); updateApiKeyIndicator()"
+                  style="accent-color:var(--amber);">
+                Use API — enable Smart Split &amp; Image Analysis
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" id="settings-anthropic-key" type="password"
+                placeholder="sk-ant-api03-…"
+                autocomplete="off"
+                oninput="saveApiKey('anthropic', this.value)">
+              <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('settings-anthropic-key', this)">Show</button>
+            </div>
+            <div class="settings-api-hint">
+              Used for Smart Split and Image Analysis.<br>
+              <a href="https://console.anthropic.com/account/keys" target="_blank">Get your Anthropic API key →</a>
+              &nbsp;·&nbsp; Stored in your browser only. Never sent anywhere except Anthropic's API.
+            </div>
+          </div>
+
+          <!-- Google (Gemini) -->
+          <div class="settings-api-row">
+            <div class="settings-api-label">
+              Google AI Studio (Gemini)
+              <span class="api-badge api-badge-active" id="gemini-status-badge">No key</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:pointer;font-size:0.75rem;font-weight:500;color:var(--ink-mid);">
+                <input type="checkbox" id="settings-gemini-active"
+                  onchange="saveApiActive('gemini', this.checked); updateApiKeyIndicator()"
+                  style="accent-color:var(--amber);">
+                Use API — enable Image Analysis
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" id="settings-gemini-key" type="password"
+                placeholder="AIza…"
+                autocomplete="off"
+                oninput="saveApiKey('gemini', this.value)">
+              <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('settings-gemini-key', this)">Show</button>
+            </div>
+            <div class="settings-api-hint">
+              Used for Image Analysis (vision). Does not generate images — Nano Banana Pro generation still happens in Gemini directly.<br>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank">Get your Gemini API key →</a>
+              &nbsp;·&nbsp; Stored in your browser only. Never sent anywhere except Google's API.
+            </div>
+          </div>
+
+          <!-- Vision provider choice -->
+          <div class="settings-api-row" id="vision-provider-row">
+            <div class="settings-api-label">Vision provider for Image Analysis</div>
+            <div class="settings-api-input-row">
+              <select class="input" id="settings-vision-provider"
+                onchange="saveVisionProvider(this.value)" style="max-width:240px">
+                <option value="anthropic">Claude (Anthropic)</option>
+                <option value="gemini">Gemini (Google)</option>
+              </select>
+            </div>
+            <div class="settings-api-hint">
+              Choose which API the "✦ Analyse" button on character/asset images uses. Switch here any time — e.g. if one provider is down or out of credits.
+            </div>
+          </div>
+
+          <!-- OpenAI — coming soon -->
+          <div class="settings-api-row settings-api-disabled">
+            <div class="settings-api-label">
+              OpenAI
+              <span class="api-badge api-badge-soon">Coming Soon</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:not-allowed;font-size:0.75rem;font-weight:500;color:var(--ink-lt);">
+                <input type="checkbox" disabled style="accent-color:var(--amber);">
+                Use API (coming soon)
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" type="password" placeholder="sk-…" disabled>
+            </div>
+            <div class="settings-api-hint">Will power direct GPT Image-2 generation and image analysis.</div>
+          </div>
+        </div>
+
+        <!-- Prompt Character Budgets — Location Designer spec, 2026-06-28 -->
+        <div class="settings-group">
+          <div class="settings-group-title">Prompt Character Budgets</div>
+          <p class="field-hint" style="margin-bottom:12px;">
+            Optional, per platform. No default limit — none of these platforms publish a reliable character cap, so trimming stays OFF until you personally hit a real wall and enter a number here. Once set, Location Designer's per-panel direction text (Storyboard) is the first thing dropped if a panel's prompt would exceed it.
+          </p>
+          <div class="settings-api-row">
+            <div class="settings-api-label">Midjourney <span style="font-weight:400;color:var(--ink-lt);">— not active yet, see note below</span></div>
+            <div class="settings-api-input-row">
+              <input class="input" type="number" min="1" id="settings-budget-mj" placeholder="No limit set" style="max-width:160px" oninput="savePromptCharBudget('mj', this.value)">
+            </div>
+          </div>
+          <div class="settings-api-row">
+            <div class="settings-api-label">GPT Image-2</div>
+            <div class="settings-api-input-row">
+              <input class="input" type="number" min="1" id="settings-budget-gpt" placeholder="No limit set" style="max-width:160px" oninput="savePromptCharBudget('gpt', this.value)">
+            </div>
+          </div>
+          <div class="settings-api-row">
+            <div class="settings-api-label">Gemini / Nano Banana Pro</div>
+            <div class="settings-api-input-row">
+              <input class="input" type="number" min="1" id="settings-budget-gemini" placeholder="No limit set" style="max-width:160px" oninput="savePromptCharBudget('gemini', this.value)">
+            </div>
+          </div>
+          <div class="settings-api-row">
+            <div class="settings-api-label">Other / Aggregator <span style="font-weight:400;color:var(--ink-lt);">(OpenArt, HiggsField, Kling, etc.) — not active yet, see note below</span></div>
+            <div class="settings-api-input-row">
+              <input class="input" type="number" min="1" id="settings-budget-other" placeholder="No limit set" style="max-width:160px" oninput="savePromptCharBudget('other', this.value)">
+            </div>
+          </div>
+          <p class="field-hint" style="margin-top:8px;">
+            <strong>Midjourney and Other/Aggregator currently do nothing when set.</strong> Storyboard's platform picker only offers GPT Image-2 and Gemini/Nano Banana Pro today (Midjourney is disabled there), and neither the Midjourney fallback path nor the Kling/Other path ever produces direction text to trim. Your number is saved and ready for whenever either platform gets Storyboard support — it just has no visible effect right now.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── TAB: VOCABULARY ────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-vocab" style="display:none">
+        <div id="vocab-manager-root"></div>
+      </div>
+
+      <!-- ── TAB: SPONSOR ───────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-sponsor" style="display:none">
+        <div class="settings-group">
+          <div class="settings-group-title">Sponsor teammates</div>
+          <p class="field-hint" style="margin-bottom:14px">
+            Share your own API key with specific teammates so they can use Image Analysis without
+            needing a key of their own. Your key is sent once over HTTPS, stored encrypted on the
+            server, and is <strong>never sent to their browser</strong> — every analysis request is
+            relayed through the server.
+          </p>
+
+          <div class="settings-api-row">
+            <div class="settings-api-label">Re-enter your password to manage sponsoring</div>
+            <div class="settings-api-input-row">
+              <input class="input" id="sponsor-confirm-password" type="password"
+                placeholder="Your account password" autocomplete="current-password">
+              <button class="btn btn-secondary btn-sm" onclick="loadSponsorSettingsUI()">Unlock</button>
+            </div>
+            <div class="settings-api-hint" id="sponsor-unlock-hint"></div>
+          </div>
+
+          <div id="sponsor-managed-section" style="display:none">
+            <div class="settings-api-row">
+              <div class="settings-api-label">Your Anthropic key for sponsoring</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-anthropic-key" type="password"
+                  placeholder="Leave blank to keep current key" autocomplete="off">
+                <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('sponsor-anthropic-key', this)">Show</button>
+              </div>
+              <div class="settings-api-hint" id="sponsor-anthropic-status"></div>
+            </div>
+
+            <div class="settings-api-row">
+              <div class="settings-api-label">Your Gemini key for sponsoring</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-gemini-key" type="password"
+                  placeholder="Leave blank to keep current key" autocomplete="off">
+                <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('sponsor-gemini-key', this)">Show</button>
+              </div>
+              <div class="settings-api-hint" id="sponsor-gemini-status"></div>
+            </div>
+
+            <div class="settings-api-row">
+              <div class="settings-api-label">Teammates allowed to use your key</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-add-username" placeholder="Username to add" maxlength="50">
+                <button class="btn btn-secondary btn-sm" onclick="addSponsoredUsername()">Add</button>
+              </div>
+              <div id="sponsor-username-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              <div class="settings-api-hint">Only usernames listed here can use your sponsored key — exact match required.</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSponsorSettings()">Save sponsor settings</button>
+            <span id="sponsor-save-status" style="margin-left:10px;font-size:0.85rem;color:var(--ink-mid)"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: BACKUP ────────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-backup" style="display:none">
+        <div class="settings-group">
+          <div class="settings-group-title">Automatic Backup</div>
+          <p class="field-hint" style="margin-bottom:14px">
+            A scheduled server-side job (3×/day via cron) zips this app's program files and copies
+            <code>userdata/</code> (projects, images, AI analysis) as plain files into the folder below.
+            The last 2 days of backups are kept; older ones are pruned automatically. This only configures
+            <em>where</em> backups go — the cron job itself is set up once, outside the app (your admin/IT
+            step, not something this panel can do).
+          </p>
+
+          <div class="settings-api-row">
+            <div class="settings-api-label">Backup destination folder</div>
+            <div class="settings-api-input-row">
+              <input class="input" id="backup-dir-input"
+                placeholder="/Users/you/SS_Studio_Backups (must be outside this app's folder)"
+                autocomplete="off">
+              <button class="btn btn-secondary btn-sm" onclick="saveBackupSettings()">Save</button>
+            </div>
+            <div class="settings-api-hint" id="backup-dir-hint">
+              Must be an absolute path, must exist or be creatable, and must be <strong>outside</strong>
+              this app's own folder (so a code-level deletion or corruption can't take the backups with it).
+            </div>
+          </div>
+
+          <div class="settings-api-row">
+            <div class="settings-api-label">Last backup status</div>
+            <div class="settings-api-hint" id="backup-status-line">Loading…</div>
+          </div>
+
+          <div class="settings-api-row">
+            <button class="btn btn-secondary btn-sm" id="backup-now-btn" onclick="runBackupNow()">Backup Now</button>
+            <div class="settings-api-hint" id="backup-now-hint">
+              Runs the same backup immediately instead of waiting for the next scheduled run. May take a
+              while on a large library — keep this tab open until it finishes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: DANGER ZONE ───────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-danger" style="display:none">
+        <div class="field" style="margin-top:8px">
+          <label class="field-label" style="color:var(--red)">Reset App</label>
+          <p class="field-hint">Clears all projects, library assets, custom vocabulary, and saved settings. Cannot be undone.</p>
+          <button class="btn btn-danger" style="margin-top:4px" onclick="confirmResetApp()">Clear all data</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('settings-modal-overlay')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  SHOT SETUP (Spatial Blocking Diagram) — phase 2                -->
+<!--  Console-callable only this phase: openShotSetupModal() /       -->
+<!--  openShotSetupModal(setupId). No nav button yet — the two real  -->
+<!--  entry points (Storyboard panel editor, Location Designer asset -->
+<!--  form) are phase 3, per 2026-07-06-spatial-blocking-diagram-    -->
+<!--  spec.md's recommended build order. All content below is       -->
+<!--  rendered by 14-shot-setup.js into #shot-setup-modal-body.      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="shot-setup-modal-overlay" onclick="handleOverlayClick(event, 'shot-setup-modal-overlay')">
+  <div class="modal shot-setup-modal">
+    <div class="modal-header">
+      <div class="page-title" style="font-size:1.1rem;">Shot Setup</div>
+      <button class="modal-close" onclick="closeShotSetupModal()">✕</button>
+    </div>
+    <div class="modal-body" id="shot-setup-modal-body">
+      <!-- Rendered by renderShotSetupModal() (14-shot-setup.js) -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: DIRECTION REFERENCE-IMAGE DERIVATION PROMPT          -->
+<!--  Location Designer v1.1 (2026-06-28-location-designer-spec.md, -->
+<!--  "v1.1 — Direction Reference Derivation"). Text/logic only — -->
+<!--  SS_Studio never calls a generation API; this builds a       -->
+<!--  ready-to-paste prompt for an external platform (GPT Image-2 -->
+<!--  recommended). Rendered by openDirectionDerivationModal()    -->
+<!--  (01-core.js).                                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="direction-derivation-modal-overlay" onclick="handleOverlayClick(event, 'direction-derivation-modal-overlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="direction-derivation-title">Reference-image prompt</h2>
+      <button class="modal-close" onclick="closeModal('direction-derivation-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-hint" style="margin-bottom:8px;">
+        Copy this into GPT Image-2 (recommended) alongside your location's own master/wide photo, attached as the reference image. SS_Studio doesn't generate images itself — this only writes the prompt.
+      </p>
+      <textarea id="direction-derivation-textarea" class="input" rows="16" readonly style="font-family:monospace;font-size:0.78rem;line-height:1.4;" onclick="this.select()"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('direction-derivation-modal-overlay')">Close</button>
+      <button class="btn btn-primary" onclick="copyDirectionDerivationPrompt()">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: POSE-DESCRIPTION HELPER                              -->
+<!--  Cross-Shot Continuity spec (2026-07-05-cross-shot-continuity- -->
+<!--  spec.md), built 2026-07-11. Text/logic only — no pose is     -->
+<!--  guaranteed, this just writes a more precise description than -->
+<!--  most users would type unprompted. Shared between Single      -->
+<!--  Frame (Subject field) and Storyboard (a panel's Composition  -->
+<!--  field) — see openPoseHelperModal()/insertPoseHelperOutput()  -->
+<!--  (01-core.js).                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="pose-helper-modal-overlay" onclick="handleOverlayClick(event, 'pose-helper-modal-overlay')">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title">Describe Pose in Detail</h2>
+      <button class="modal-close" onclick="closeModal('pose-helper-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body" id="pose-helper-body">
+      <!-- rendered by renderPoseHelperModal() (01-core.js) -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('pose-helper-modal-overlay')">Cancel</button>
+      <button class="btn btn-secondary" onclick="copyPoseHelperOutput()">Copy</button>
+      <button class="btn btn-primary" onclick="insertPoseHelperOutput()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  CONFIRM DIALOG                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  TOAST                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: SEQUENCES                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-sequences" class="view">
+  <div class="page-wrap sequences-page-wrap">
+    <div id="sequences-view-inner">
+      <div class="seq-empty-state">
+        <div class="seq-empty-icon">🎞</div>
+        <p>Select a project to view sequences.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  IMAGE LIGHTBOX                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="img-lightbox-overlay" onclick="closeLightbox()">
+  <button id="img-lightbox-close" onclick="closeLightbox()" title="Close">✕</button>
+  <img id="img-lightbox-img" src="" alt="Full size preview" onclick="event.stopPropagation()">
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- SCRIPTS (loaded in dependency order) -->
+<script src="js/01-core.js"></script>
+<script src="js/12-progress.js"></script>
+<script src="js/02-singleframe.js"></script>
+<script src="js/03-storyboard.js"></script>
+<script src="js/04-mentions.js"></script>
+<script src="js/05-translator.js"></script>
+<script src="js/06-scene-engine.js"></script>
+<script src="js/07-settings.js"></script>
+<script src="js/08-vocabulary.js"></script>
+<script src="js/09-image-analyser.js"></script>
+<script src="js/10-sequences.js"></script>
+<script src="js/11-reference-panel.js"></script>
+<script src="js/13-tour.js"></script>
+<script src="js/14-shot-setup.js"></script>
+<script src="js/00-api.js"></script>
+<script>
+const VOCABULARY_DATA = {
+  "_comment": "SceneSmith Studio v7 — Built-in vocabulary library. Add keywords here and rebuild.",
+  "_version": "7.0",
+
+  "genres": {
+    "cinematic-portrait": {
+      "label": "Cinematic Portrait",
+      "subject": ["elderly man", "young woman", "warrior", "saint", "sage", "merchant", "soldier"],
+      "mood": ["contemplative", "weathered wisdom", "quiet dignity", "inner fire", "serene authority"],
+      "env": ["interior", "window light", "street", "studio neutral"],
+      "wardrobe": ["period costume", "natural fabric", "worn clothing"]
+    },
+    "mythology": {
+      "label": "Mythology / Devotional",
+      "subject": ["deity", "divine being", "saint", "sage", "rishi", "devotee", "ascetic", "warrior-saint"],
+      "mood": ["divine radiance", "wrathful compassion", "serene wisdom", "fierce devotion", "transcendent calm"],
+      "env": ["temple courtyard", "forest ashram", "riverbank ghat", "mountain peak", "cosmic void"],
+      "wardrobe": ["rudraksha mala", "kamandalu", "trishul", "lotus", "sacred text", "diya", "conch shell"]
+    },
+    "fantasy": {
+      "label": "Fantasy / Battle",
+      "subject": ["warrior", "hero", "demon", "creature", "knight", "assassin", "mage", "commander"],
+      "mood": ["battle fury", "predatory calm", "warrior focus", "primal power", "unstoppable momentum"],
+      "env": ["war-torn battlefield", "apocalyptic landscape", "dark fortress", "storm-lit sky"],
+      "wardrobe": ["battle armour", "enchanted weapon", "war paint", "tattered cloak"]
+    },
+    "street": {
+      "label": "Street / Documentary",
+      "subject": ["vendor", "commuter", "child", "elder", "worker", "crowd"],
+      "mood": ["candid, unposed, raw authenticity", "fleeting moment", "observed life"],
+      "env": ["busy market street", "public transport", "urban alley", "open square"],
+      "wardrobe": ["everyday clothing", "work uniform", "street wear"]
+    },
+    "product": {
+      "label": "Product / Commercial",
+      "subject": ["product", "object", "bottle", "device", "food item", "jewellery piece"],
+      "mood": ["clean and precise", "commercial quality", "editorial product"],
+      "env": ["white studio background", "concrete surface", "lifestyle context", "minimal surface"],
+      "wardrobe": []
+    },
+    "illustrated": {
+      "label": "Illustrated / Children's",
+      "subject": ["child character", "animal companion", "magical creature", "fairy", "toy"],
+      "mood": ["whimsical and wonder-filled", "warm and playful", "innocent adventure"],
+      "env": ["enchanted forest", "cosy interior", "magical landscape", "picture book setting"],
+      "wardrobe": ["colourful clothing", "fantasy costume", "cute accessories"]
+    }
+  },
+
+  "powerBoosters": [
+    "8K resolution",
+    "real life, true to life, lifelike",
+    "subsurface scattering, light through skin",
+    "depth of field mastery, perfect bokeh",
+    "hyperrealistic, indistinguishable from photograph",
+    "cinematic colour grading, professional colour science",
+    "physically accurate lighting, real-world light behaviour",
+    "award-winning photography",
+    "masterpiece, highest quality"
+  ],
+
+  "signatureTechniques": {
+    "dual-light": "warm amber practical light against cold blue-grey environment, dual light temperature contrast between subject and background",
+    "sss": "subsurface scattering skin render, light passes through ear cartilage and fingertips creating warm reddish translucency, photorealistic skin physics",
+    "particles": "dust motes suspended mid-air, individually visible, backlit, volumetric atmosphere, physically accurate particle dynamics",
+    "practical": "all illumination from visible practical sources in scene — candles, fire, oil lamps, window light — no artificial fill, no light without visible source",
+    "wind": "individual hair strand separation, wind-blown directional movement, flyaway strands catching light, realistic hair physics simulation",
+    "frozen": "high-speed frozen moment, motion blur on periphery only, sharp subject at point of impact, suspended mid-motion with physically accurate dynamics"
+  }
+}
+;
+</script>
+</body>
+</html>

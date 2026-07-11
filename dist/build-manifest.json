@@ -1,0 +1,20 @@
+{
+  "version": "7.1.0",
+  "built": "2026-06-24 00:00:00",
+  "css_raw": "61.5 KB",
+  "css_min": "45.6 KB",
+  "js_raw": "205.9 KB",
+  "js_min": "147.3 KB",
+  "total_out": "265.4 KB",
+  "js_files": [
+    "01-core.js",
+    "02-singleframe.js",
+    "03-storyboard.js",
+    "04-mentions.js",
+    "05-translator.js",
+    "06-scene-engine.js",
+    "07-settings.js",
+    "08-vocabulary.js",
+    "09-image-analyser.js"
+  ]
+}

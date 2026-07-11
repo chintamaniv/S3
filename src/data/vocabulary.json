@@ -1,0 +1,70 @@
+{
+  "_comment": "SceneSmith Studio v7 — Built-in vocabulary library. Add keywords here and rebuild.",
+  "_version": "7.0",
+
+  "genres": {
+    "cinematic-portrait": {
+      "label": "Cinematic Portrait",
+      "subject": ["elderly man", "young woman", "warrior", "saint", "sage", "merchant", "soldier"],
+      "mood": ["contemplative", "weathered wisdom", "quiet dignity", "inner fire", "serene authority"],
+      "env": ["interior", "window light", "street", "studio neutral"],
+      "wardrobe": ["period costume", "natural fabric", "worn clothing"]
+    },
+    "mythology": {
+      "label": "Mythology / Devotional",
+      "subject": ["deity", "divine being", "saint", "sage", "rishi", "devotee", "ascetic", "warrior-saint"],
+      "mood": ["divine radiance", "wrathful compassion", "serene wisdom", "fierce devotion", "transcendent calm"],
+      "env": ["temple courtyard", "forest ashram", "riverbank ghat", "mountain peak", "cosmic void"],
+      "wardrobe": ["rudraksha mala", "kamandalu", "trishul", "lotus", "sacred text", "diya", "conch shell"]
+    },
+    "fantasy": {
+      "label": "Fantasy / Battle",
+      "subject": ["warrior", "hero", "demon", "creature", "knight", "assassin", "mage", "commander"],
+      "mood": ["battle fury", "predatory calm", "warrior focus", "primal power", "unstoppable momentum"],
+      "env": ["war-torn battlefield", "apocalyptic landscape", "dark fortress", "storm-lit sky"],
+      "wardrobe": ["battle armour", "enchanted weapon", "war paint", "tattered cloak"]
+    },
+    "street": {
+      "label": "Street / Documentary",
+      "subject": ["vendor", "commuter", "child", "elder", "worker", "crowd"],
+      "mood": ["candid, unposed, raw authenticity", "fleeting moment", "observed life"],
+      "env": ["busy market street", "public transport", "urban alley", "open square"],
+      "wardrobe": ["everyday clothing", "work uniform", "street wear"]
+    },
+    "product": {
+      "label": "Product / Commercial",
+      "subject": ["product", "object", "bottle", "device", "food item", "jewellery piece"],
+      "mood": ["clean and precise", "commercial quality", "editorial product"],
+      "env": ["white studio background", "concrete surface", "lifestyle context", "minimal surface"],
+      "wardrobe": []
+    },
+    "illustrated": {
+      "label": "Illustrated / Children's",
+      "subject": ["child character", "animal companion", "magical creature", "fairy", "toy"],
+      "mood": ["whimsical and wonder-filled", "warm and playful", "innocent adventure"],
+      "env": ["enchanted forest", "cosy interior", "magical landscape", "picture book setting"],
+      "wardrobe": ["colourful clothing", "fantasy costume", "cute accessories"]
+    }
+  },
+
+  "powerBoosters": [
+    "8K resolution",
+    "real life, true to life, lifelike",
+    "subsurface scattering, light through skin",
+    "depth of field mastery, perfect bokeh",
+    "hyperrealistic, indistinguishable from photograph",
+    "cinematic colour grading, professional colour science",
+    "physically accurate lighting, real-world light behaviour",
+    "award-winning photography",
+    "masterpiece, highest quality"
+  ],
+
+  "signatureTechniques": {
+    "dual-light": "warm amber practical light against cold blue-grey environment, dual light temperature contrast between subject and background",
+    "sss": "subsurface scattering skin render, light passes through ear cartilage and fingertips creating warm reddish translucency, photorealistic skin physics",
+    "particles": "dust motes suspended mid-air, individually visible, backlit, volumetric atmosphere, physically accurate particle dynamics",
+    "practical": "all illumination from visible practical sources in scene — candles, fire, oil lamps, window light — no artificial fill, no light without visible source",
+    "wind": "individual hair strand separation, wind-blown directional movement, flyaway strands catching light, realistic hair physics simulation",
+    "frozen": "high-speed frozen moment, motion blur on periphery only, sharp subject at point of impact, suspended mid-motion with physically accurate dynamics"
+  }
+}

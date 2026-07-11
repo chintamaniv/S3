@@ -1,0 +1,3911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SS_Studio</title>
+<style>
+:root {
+--cream:      #FAF7F2;
+--cream-mid:  #F2EDE4;
+--cream-dark: #E8E0D4;
+--amber:      #C8860A;
+--amber-lt:   #E8A020;
+--amber-bg:   #FFF8E8;
+--charcoal:   #1E1C18;
+--ink:        #2D2A24;
+--ink-mid:    #5C5648;
+--ink-lt:     #8C8478;
+--border:     #D8D0C4;
+--border-lt:  #EAE4DC;
+--white:      #FFFFFF;
+--red:        #B84040;
+--green:      #3A7A3A;
+--radius-sm:  4px;
+--radius:     8px;
+--radius-lg:  12px;
+--radius-xl:  16px;
+--shadow-sm:  0 1px 3px rgba(30,28,24,0.08);
+--shadow:     0 2px 8px rgba(30,28,24,0.10);
+--shadow-lg:  0 4px 20px rgba(30,28,24,0.12);
+--font-serif: Georgia, 'Times New Roman', serif;
+--font-sans:  -apple-system, 'Segoe UI', system-ui, sans-serif;
+--font-mono:  'Courier New', monospace;
+--transition: 160ms ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; }
+body {
+font-family: var(--font-sans);
+background: var(--cream);
+color: var(--ink);
+min-height: 100vh;
+line-height: 1.5;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; font-size: inherit; }
+a { color: var(--amber); text-decoration: none; }
+#app-header {
+background: var(--white);
+border-bottom: 1.5px solid var(--border);
+padding: 0 24px;
+height: 56px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: sticky;
+top: 0;
+z-index: 100;
+box-shadow: var(--shadow-sm);
+}
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  user-select: none;
+  cursor: default;
+}
+.wordmark-ss {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: bold;
+  letter-spacing: -0.03em;
+  color: var(--charcoal);
+}
+.wordmark-under {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: var(--amber);
+  letter-spacing: -0.03em;
+}
+.wordmark-studio {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: var(--charcoal);
+  margin-left: 1px;
+}
+.wordmark-version {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+  opacity: 0.7;
+  margin-left: 6px;
+  align-self: center;
+  padding: 1px 5px;
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+}
+/* User chip in header */
+#user-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--ink-lt);
+  background: var(--amber-bg);
+  border: 1px solid #e8d8b0;
+  border-radius: 20px;
+  padding: 3px 10px 3px 7px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#user-chip:hover { background: #f0e4c0; }
+#user-chip .user-avatar {
+  width: 18px; height: 18px;
+  background: var(--amber);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+/* ── SEQUENCES ───────────────────────────────────────────── */
+.sequences-page-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+.seq-header-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.seq-project-label {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--ink); font-size: 1.05rem; font-weight: 600;
+}
+.seq-project-icon { font-size: 1.1rem; }
+.seq-new-btn {
+  padding: 8px 16px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--ink-muted); font-size: 0.85rem; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.seq-new-btn:hover { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+.seq-empty-state {
+  text-align: center; padding: 60px 20px; color: var(--ink-subtle);
+}
+.seq-empty-state .seq-empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.seq-empty-state p { margin: 0; line-height: 1.6; }
+.seq-card {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 10px; margin-bottom: 12px; overflow: hidden;
+  transition: border-color 0.15s;
+}
+.seq-card--open { border-color: var(--amber); }
+.seq-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer; user-select: none;
+}
+.seq-card-header:hover { background: var(--surface-2); }
+.seq-card-title {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600; font-size: 0.95rem; color: var(--ink);
+}
+.seq-icon { font-size: 1rem; }
+.seq-shot-count {
+  font-size: 0.75rem; color: var(--ink-subtle); font-weight: 400;
+  background: var(--surface-2); border-radius: 10px;
+  padding: 2px 8px; border: 1px solid var(--border);
+}
+.seq-card-actions { display: flex; align-items: center; gap: 8px; }
+.seq-action-btn {
+  width: 22px; height: 22px; border-radius: 50%; border: none;
+  background: transparent; color: var(--ink-subtle); cursor: pointer;
+  font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.seq-action-btn:hover { background: #ff3b3b22; color: #ff6b6b; }
+.seq-chevron { font-size: 0.7rem; color: var(--ink-subtle); }
+.seq-shots-list { border-top: 1px solid var(--border); padding: 12px 16px; }
+.seq-shots-empty { color: var(--ink-subtle); font-size: 0.83rem; padding: 12px 0; text-align: center; }
+.shot-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+}
+.shot-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.shot-label { font-weight: 600; font-size: 0.88rem; color: var(--ink); }
+.shot-card-actions { display: flex; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+.shot-action-btn {
+  height: 24px; border-radius: 5px; border: none;
+  background: transparent; cursor: pointer; font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; color: var(--ink-subtle);
+  padding: 0 6px;
+}
+.shot-action-btn:hover { background: var(--surface-1); }
+.shot-load-btn {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--amber); border: 1px solid var(--amber);
+  border-radius: 5px; padding: 0 8px;
+}
+.shot-load-btn:hover { background: var(--amber-bg); }
+.shot-prompt-preview {
+  font-size: 0.78rem; color: var(--ink-muted); line-height: 1.5;
+  margin-bottom: 8px;
+}
+.shot-meta { display: flex; align-items: center; gap: 10px; }
+.shot-source-tag {
+  font-size: 0.7rem; background: var(--amber-bg); color: var(--amber);
+  border-radius: 5px; padding: 2px 7px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.shot-date { font-size: 0.72rem; color: var(--ink-subtle); }
+.shot-card--storyboard { border-left: 3px solid var(--amber); }
+.shot-prompt-preview--sb { padding: 0; }
+.shot-panel-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 3px 0; border-bottom: 1px solid var(--border);
+  font-size: 0.76rem; line-height: 1.4;
+}
+.shot-panel-row:last-child { border-bottom: none; }
+.shot-panel-num {
+  flex-shrink: 0; width: 16px; height: 16px;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 3px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: var(--amber);
+}
+.shot-panel-shot {
+  flex-shrink: 0; color: var(--amber);
+  font-size: 0.7rem; font-weight: 600; min-width: 70px;
+}
+.shot-panel-text { color: var(--ink-muted); }
+
+.header-right {
+display: flex;
+align-items: center;
+gap: 8px;
+min-width: 0;
+flex-shrink: 1;
+}
+#project-switcher-wrap {
+display: flex;
+align-items: center;
+gap: 6px;
+min-width: 0;
+}
+#project-label {
+font-size: 0.72rem;
+color: var(--ink-lt);
+text-transform: uppercase;
+letter-spacing: 0.08em;
+white-space: nowrap;
+flex-shrink: 0;
+}
+#project-select {
+background: var(--cream-mid);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+padding: 5px 28px 5px 10px;
+font-size: 0.82rem;
+min-width: 0;
+color: var(--ink);
+font-weight: 600;
+appearance: none;
+-webkit-appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238C8478' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+background-repeat: no-repeat;
+background-position: right 10px center;
+cursor: pointer;
+max-width: 160px;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+#project-select:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+.btn-icon {
+width: 30px; height: 30px;
+border-radius: var(--radius-sm);
+display: flex; align-items: center; justify-content: center;
+background: var(--cream-mid);
+border: 1px solid var(--border);
+color: var(--ink-mid);
+font-size: 1rem;
+transition: background var(--transition), color var(--transition);
+}
+.btn-icon:hover { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+.settings-group {
+display: flex;
+flex-direction: column;
+gap: 14px;
+}
+.settings-group-title {
+font-size: 0.68rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(--ink-lt);
+margin-bottom: 2px;
+}
+.settings-api-row {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.settings-api-label {
+font-size: 0.78rem;
+font-weight: 600;
+color: var(--ink);
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.settings-api-label .api-badge {
+font-size: 0.62rem;
+font-weight: 700;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+padding: 1px 6px;
+border-radius: 3px;
+}
+.api-badge-active { background: #E8F5E8; color: #2E6E2E; }
+.api-badge-soon   { background: var(--cream-dark); color: var(--ink-lt); }
+.settings-api-input-row {
+display: flex;
+gap: 6px;
+align-items: center;
+}
+.settings-api-input-row .input { font-family: var(--font-mono); font-size: 0.8rem; flex: 1; }
+.settings-api-hint {
+font-size: 0.7rem;
+color: var(--ink-lt);
+margin-top: 2px;
+}
+.settings-api-hint a { color: var(--amber); text-decoration: underline; }
+.settings-api-disabled { opacity: 0.45; pointer-events: none; }
+.sf-onboarding-banner {
+background: var(--amber-bg);
+border: 1px solid rgba(200,134,10,0.25);
+border-radius: var(--radius);
+padding: 12px 16px;
+margin-bottom: 20px;
+position: relative;
+}
+.sf-onboarding-title {
+font-size: 0.8rem;
+font-weight: 700;
+color: var(--amber);
+margin-bottom: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.sf-onboarding-steps {
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+.sf-onboarding-step {
+font-size: 0.76rem;
+color: var(--ink-mid);
+display: flex;
+gap: 8px;
+align-items: baseline;
+line-height: 1.4;
+}
+.sf-onboarding-step-num {
+font-weight: 700;
+color: var(--amber);
+flex-shrink: 0;
+font-size: 0.7rem;
+background: var(--white);
+border: 1px solid rgba(200,134,10,0.3);
+border-radius: 50%;
+width: 18px; height: 18px;
+display: flex; align-items: center; justify-content: center;
+}
+.sf-onboarding-dismiss {
+position: absolute;
+top: 10px; right: 10px;
+font-size: 0.75rem;
+color: var(--ink-lt);
+cursor: pointer;
+padding: 2px 6px;
+border-radius: 3px;
+}
+.sf-onboarding-dismiss:hover { background: var(--cream-dark); color: var(--ink); }
+.sf-onboarding-extras {
+margin-top: 8px;
+padding-top: 8px;
+border-top: 1px solid rgba(200,134,10,0.15);
+display: flex;
+flex-wrap: wrap;
+gap: 12px;
+}
+.sf-onboarding-tip {
+font-size: 0.72rem;
+color: var(--ink-lt);
+display: flex;
+align-items: center;
+gap: 5px;
+}
+.sf-onboarding-tip strong { color: var(--ink-mid); }
+.chip-typeahead {
+position: absolute;
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+box-shadow: var(--shadow);
+z-index: 400;
+max-height: 180px;
+overflow-y: auto;
+min-width: 200px;
+margin-top: 2px;
+}
+.chip-typeahead-item {
+padding: 7px 12px;
+font-size: 0.78rem;
+color: var(--ink);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.chip-typeahead-item:hover { background: var(--amber-bg); color: var(--amber); }
+.chip-typeahead-item .ta-source {
+font-size: 0.65rem;
+color: var(--ink-lt);
+margin-left: auto;
+white-space: nowrap;
+}
+.chip-typeahead-empty {
+padding: 8px 12px;
+font-size: 0.75rem;
+color: var(--ink-lt);
+font-style: italic;
+}
+#main-nav {
+background: var(--white);
+border-bottom: 1px solid var(--border-lt);
+padding: 0 24px;
+display: flex;
+gap: 0;
+}
+.nav-tab {
+padding: 12px 20px;
+font-size: 0.82rem;
+font-weight: 600;
+color: var(--ink-lt);
+letter-spacing: 0.04em;
+border-bottom: 2.5px solid transparent;
+transition: color var(--transition), border-color var(--transition);
+position: relative;
+top: 1px;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.active {
+color: var(--amber);
+border-bottom-color: var(--amber);
+}
+.nav-tab.disabled {
+opacity: 0.4;
+cursor: not-allowed;
+pointer-events: none;
+}
+.nav-badge {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+background: var(--cream-dark);
+color: var(--ink-mid);
+font-size: 0.6rem;
+font-weight: 700;
+border-radius: 20px;
+padding: 1px 6px;
+margin-left: 6px;
+letter-spacing: 0.05em;
+}
+.nav-tab.active .nav-badge { background: var(--amber-bg); color: var(--amber); }
+.coming-soon-badge {
+background: var(--cream-dark);
+color: var(--ink-lt);
+font-size: 0.55rem;
+font-weight: 700;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+border-radius: 3px;
+padding: 1px 5px;
+margin-left: 6px;
+vertical-align: middle;
+}
+.view { display: none; }
+.view.active { display: block; }
+.page-wrap {
+max-width: 1100px;
+margin: 0 auto;
+padding: 32px 24px 64px;
+}
+.page-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 28px;
+gap: 16px;
+}
+.page-title {
+font-family: var(--font-serif);
+font-size: 1.55rem;
+font-weight: normal;
+color: var(--charcoal);
+line-height: 1.2;
+}
+.page-subtitle {
+font-size: 0.8rem;
+color: var(--ink-lt);
+margin-top: 4px;
+line-height: 1.4;
+}
+.btn {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 8px 16px;
+border-radius: var(--radius-sm);
+font-size: 0.82rem;
+font-weight: 600;
+letter-spacing: 0.02em;
+transition: all var(--transition);
+white-space: nowrap;
+}
+.btn-primary {
+background: var(--amber);
+color: var(--white);
+border: 1px solid var(--amber);
+}
+.btn-primary:hover { background: var(--amber-lt); border-color: var(--amber-lt); }
+.btn-secondary {
+background: var(--white);
+color: var(--ink);
+border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--cream-mid); border-color: var(--border); }
+.btn-ghost {
+background: transparent;
+color: var(--ink-mid);
+border: 1px solid transparent;
+padding: 6px 10px;
+}
+.btn-ghost:hover { background: var(--cream-mid); color: var(--ink); }
+.btn-danger {
+background: transparent;
+color: var(--red);
+border: 1px solid transparent;
+padding: 6px 10px;
+}
+.btn-danger:hover { background: #FFF0F0; border-color: #F0C0C0; }
+.btn-sm { padding: 5px 10px; font-size: 0.76rem; }
+#lib-type-tabs {
+display: flex;
+gap: 4px;
+margin-bottom: 24px;
+background: var(--cream-mid);
+padding: 4px;
+border-radius: var(--radius);
+width: fit-content;
+border: 1px solid var(--border);
+}
+.lib-type-tab {
+padding: 7px 14px;
+border-radius: var(--radius-sm);
+font-size: 0.78rem;
+font-weight: 600;
+color: var(--ink-mid);
+letter-spacing: 0.02em;
+transition: all var(--transition);
+}
+.lib-type-tab:hover { color: var(--ink); background: var(--cream-dark); }
+.lib-type-tab.active {
+background: var(--white);
+color: var(--amber);
+box-shadow: var(--shadow-sm);
+}
+.lib-type-count {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 18px; height: 18px;
+background: var(--cream-dark);
+color: var(--ink-mid);
+font-size: 0.62rem;
+font-weight: 700;
+border-radius: 50%;
+margin-left: 5px;
+}
+.lib-type-count-spinner {
+display: inline-block;
+width: 8px; height: 8px;
+border: 1.5px solid var(--ink-lt);
+border-top-color: var(--amber);
+border-radius: 50%;
+animation: libTabSpin 0.7s linear infinite;
+}
+@keyframes libTabSpin { to { transform: rotate(360deg); } }
+.lib-type-tab.active .lib-type-count {
+background: var(--amber-bg);
+color: var(--amber);
+}
+#asset-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+gap: 16px;
+margin-bottom: 24px;
+}
+.asset-card {
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius-lg);
+padding: 18px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+box-shadow: var(--shadow-sm);
+transition: box-shadow var(--transition), border-color var(--transition);
+position: relative;
+}
+.asset-card:hover {
+box-shadow: var(--shadow);
+border-color: var(--border);
+}
+.asset-card-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 8px;
+}
+.asset-card-name {
+font-family: var(--font-serif);
+font-size: 1rem;
+color: var(--charcoal);
+font-weight: normal;
+line-height: 1.3;
+flex: 1;
+}
+.asset-card-actions {
+display: flex;
+gap: 4px;
+flex-shrink: 0;
+}
+.asset-card-action-edit {
+padding: 4px 10px;
+font-size: 0.7rem;
+font-weight: 600;
+border-radius: var(--radius-sm);
+border: 1px solid var(--border);
+background: var(--cream);
+color: var(--ink-mid);
+cursor: pointer;
+transition: all var(--transition);
+font-family: var(--font-sans);
+}
+.asset-card-action-edit:hover {
+background: var(--amber-bg);
+border-color: var(--amber);
+color: var(--amber);
+}
+.asset-card-action-delete {
+padding: 4px 10px;
+font-size: 0.7rem;
+font-weight: 600;
+border-radius: var(--radius-sm);
+border: 1px solid var(--border);
+background: var(--cream);
+color: var(--ink-lt);
+cursor: pointer;
+transition: all var(--transition);
+font-family: var(--font-sans);
+}
+.asset-card-action-delete:hover {
+background: #FFF0F0;
+border-color: #E0A0A0;
+color: var(--red);
+}
+.asset-type-tag {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+font-size: 0.65rem;
+font-weight: 700;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+padding: 2px 8px;
+border-radius: 20px;
+width: fit-content;
+}
+.tag-character   { background: #EEF4FF; color: #3060B0; }
+.tag-location    { background: #F0F8EE; color: #2E6E2E; }
+.tag-prop        { background: #FDF4E8; color: #8A5000; }
+.tag-era         { background: #F8EEFF; color: #6030A0; }
+.tag-style       { background: #FFF0F5; color: #A03060; }
+.asset-card-desc {
+font-size: 0.8rem;
+color: var(--ink-mid);
+line-height: 1.55;
+display: -webkit-box;
+-webkit-line-clamp: 3;
+-webkit-box-orient: vertical;
+overflow: hidden;
+}
+.asset-card-meta {
+display: flex;
+gap: 12px;
+font-size: 0.7rem;
+color: var(--ink-lt);
+margin-top: 2px;
+}
+.asset-card-meta span { display: flex; align-items: center; gap: 3px; }
+.asset-img-thumb {
+width: 100%;
+height: 90px;
+object-fit: cover;
+border-radius: var(--radius-sm);
+border: 1px solid var(--border-lt);
+margin-top: 2px;
+}
+.empty-state {
+grid-column: 1 / -1;
+text-align: center;
+padding: 60px 20px;
+color: var(--ink-lt);
+}
+.empty-state-icon {
+font-size: 2.5rem;
+margin-bottom: 12px;
+opacity: 0.4;
+}
+.empty-state-title {
+font-family: var(--font-serif);
+font-size: 1.05rem;
+color: var(--ink-mid);
+margin-bottom: 6px;
+}
+.empty-state-desc {
+font-size: 0.8rem;
+max-width: 320px;
+margin: 0 auto 18px;
+line-height: 1.5;
+}
+.modal-overlay {
+position: fixed;
+inset: 0;
+background: rgba(30,28,24,0.45);
+z-index: 500;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+backdrop-filter: blur(2px);
+opacity: 0;
+pointer-events: none;
+transition: opacity 200ms ease;
+}
+.modal-overlay.open {
+opacity: 1;
+pointer-events: all;
+}
+.modal {
+background: var(--white);
+border-radius: var(--radius-xl);
+box-shadow: var(--shadow-lg);
+width: 100%;
+max-width: 580px;
+max-height: 90vh;
+overflow-y: auto;
+transform: translateY(12px);
+transition: transform 200ms ease;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-header {
+padding: 22px 24px 16px;
+border-bottom: 1px solid var(--border-lt);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.modal-title {
+font-family: var(--font-serif);
+font-size: 1.15rem;
+color: var(--charcoal);
+font-weight: normal;
+}
+.modal-close {
+width: 28px; height: 28px;
+border-radius: var(--radius-sm);
+display: flex; align-items: center; justify-content: center;
+color: var(--ink-lt);
+font-size: 1.1rem;
+transition: all var(--transition);
+}
+.modal-close:hover { background: var(--cream-mid); color: var(--ink); }
+.modal-body {
+padding: 20px 24px;
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+.modal-footer {
+padding: 16px 24px 20px;
+border-top: 1px solid var(--border-lt);
+display: flex;
+justify-content: flex-end;
+gap: 8px;
+}
+.field {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.field-label {
+font-size: 0.75rem;
+font-weight: 700;
+color: var(--ink);
+letter-spacing: 0.04em;
+text-transform: uppercase;
+}
+.field-hint {
+font-size: 0.72rem;
+color: var(--ink-lt);
+margin-top: -3px;
+}
+.field-required { color: var(--amber); margin-left: 2px; }
+.input {
+padding: 9px 12px;
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+background: var(--white);
+color: var(--ink);
+font-size: 0.88rem;
+transition: border-color var(--transition), box-shadow var(--transition);
+width: 100%;
+}
+.input:focus {
+outline: none;
+border-color: var(--amber);
+box-shadow: 0 0 0 2px rgba(200,134,10,0.12);
+}
+.input::placeholder { color: var(--ink-lt); }
+textarea.input {
+resize: vertical;
+min-height: 90px;
+line-height: 1.55;
+}
+.field-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+}
+.image-upload-zone {
+border: 1.5px dashed var(--border);
+border-radius: var(--radius);
+padding: 20px;
+text-align: center;
+cursor: pointer;
+transition: all var(--transition);
+background: var(--cream);
+position: relative;
+}
+.image-upload-zone:hover {
+border-color: var(--amber);
+background: var(--amber-bg);
+}
+.image-upload-zone input[type="file"] {
+position: absolute;
+inset: 0;
+opacity: 0;
+cursor: pointer;
+width: 100%;
+height: 100%;
+}
+.image-upload-zone-text {
+font-size: 0.78rem;
+color: var(--ink-lt);
+line-height: 1.5;
+}
+.image-upload-zone-text strong { color: var(--amber); }
+.image-preview-wrap {
+position: relative;
+display: inline-block;
+}
+.image-preview {
+width: 100%;
+max-height: 140px;
+object-fit: cover;
+border-radius: var(--radius-sm);
+display: block;
+}
+.image-remove {
+position: absolute;
+top: 6px; right: 6px;
+background: rgba(30,28,24,0.7);
+color: var(--white);
+border-radius: 50%;
+width: 22px; height: 22px;
+display: flex; align-items: center; justify-content: center;
+font-size: 0.75rem;
+transition: background var(--transition);
+}
+.image-remove:hover { background: var(--red); }
+.section-divider {
+font-size: 0.65rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(--ink-lt);
+display: flex;
+align-items: center;
+gap: 10px;
+margin: 2px 0;
+}
+.section-divider::before,
+.section-divider::after {
+content: '';
+flex: 1;
+height: 1px;
+background: var(--border-lt);
+}
+#project-list {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.project-list-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 10px 14px;
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+background: var(--cream);
+transition: all var(--transition);
+}
+.project-list-item.active-project {
+border-color: var(--amber);
+background: var(--amber-bg);
+}
+.project-list-item-name {
+font-size: 0.88rem;
+font-weight: 600;
+color: var(--ink);
+}
+.project-list-item-meta {
+font-size: 0.7rem;
+color: var(--ink-lt);
+margin-top: 1px;
+}
+.project-actions { display: flex; gap: 4px; }
+.active-dot {
+width: 6px; height: 6px;
+background: var(--amber);
+border-radius: 50%;
+flex-shrink: 0;
+margin-right: 4px;
+}
+#confirm-overlay {
+position: fixed;
+inset: 0;
+background: rgba(30,28,24,0.5);
+z-index: 600;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+opacity: 0;
+pointer-events: none;
+transition: opacity 150ms ease;
+}
+#confirm-overlay.open { opacity: 1; pointer-events: all; }
+.confirm-box {
+background: var(--white);
+border-radius: var(--radius-lg);
+padding: 24px;
+max-width: 380px;
+width: 100%;
+box-shadow: var(--shadow-lg);
+}
+.confirm-title {
+font-family: var(--font-serif);
+font-size: 1.05rem;
+margin-bottom: 8px;
+color: var(--charcoal);
+}
+.confirm-msg {
+font-size: 0.82rem;
+color: var(--ink-mid);
+line-height: 1.5;
+margin-bottom: 20px;
+}
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+#toast {
+position: fixed;
+bottom: 24px;
+left: 50%;
+transform: translateX(-50%) translateY(12px);
+background: var(--charcoal);
+color: var(--white);
+padding: 10px 20px;
+border-radius: var(--radius);
+font-size: 0.82rem;
+font-weight: 500;
+z-index: 700;
+opacity: 0;
+transition: opacity 250ms ease, transform 250ms ease;
+white-space: pre-wrap;
+word-break: break-word;
+pointer-events: none;
+box-shadow: var(--shadow-lg);
+max-width: min(560px, calc(100vw - 48px));
+max-height: 40vh;
+overflow-y: auto;
+text-align: left;
+}
+#toast.show {
+opacity: 1;
+transform: translateX(-50%) translateY(0);
+}
+#toast.success { background: var(--green); }
+#toast.warning { background: var(--amber); }
+#toast.error   {
+background: var(--red);
+pointer-events: auto;
+cursor: pointer;
+user-select: text;
+padding-right: 36px;
+position: relative;
+}
+#toast.error::after {
+content: '✕ click to dismiss · select text to copy';
+display: block;
+margin-top: 6px;
+font-size: 0.68rem;
+font-weight: 400;
+opacity: 0.85;
+}
+#no-project-state {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+min-height: 60vh;
+text-align: center;
+gap: 16px;
+}
+.welcome-title {
+font-family: var(--font-serif);
+font-size: 2rem;
+color: var(--charcoal);
+font-weight: normal;
+line-height: 1.2;
+}
+.welcome-title em { color: var(--amber); font-style: normal; }
+.welcome-sub {
+font-size: 0.88rem;
+color: var(--ink-lt);
+max-width: 380px;
+line-height: 1.6;
+}
+[data-tooltip] {
+position: relative;
+}
+[data-tooltip]::after {
+content: attr(data-tooltip);
+position: absolute;
+bottom: calc(100% + 6px);
+left: 50%;
+transform: translateX(-50%);
+background: var(--charcoal);
+color: var(--white);
+font-size: 0.7rem;
+padding: 4px 8px;
+border-radius: var(--radius-sm);
+white-space: nowrap;
+pointer-events: none;
+opacity: 0;
+transition: opacity 150ms ease;
+z-index: 200;
+font-weight: normal;
+letter-spacing: 0;
+}
+[data-tooltip]:hover::after { opacity: 1; }
+#app-header [data-tooltip]::after {
+bottom: auto;
+top: calc(100% + 6px);
+}
+.coming-soon-view {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+min-height: 55vh;
+text-align: center;
+gap: 12px;
+color: var(--ink-lt);
+}
+.coming-soon-view .cs-icon { font-size: 2.5rem; opacity: 0.3; }
+.coming-soon-view h2 {
+font-family: var(--font-serif);
+font-size: 1.3rem;
+color: var(--ink-mid);
+font-weight: normal;
+}
+.coming-soon-view p {
+font-size: 0.82rem;
+max-width: 300px;
+line-height: 1.6;
+}
+.sf-layout {
+display: grid;
+grid-template-columns: 420px 1fr;
+min-height: calc(100vh - 112px);
+align-items: start;
+}
+.sf-left {
+border-right: 1px solid var(--border);
+padding: 20px 20px 60px;
+overflow-y: auto;
+background: var(--white);
+position: sticky;
+top: 112px;
+max-height: calc(100vh - 112px);
+overflow-y: auto;
+}
+.sf-right {
+padding: 20px 24px 60px;
+background: var(--cream);
+}
+.sf-noproj-msg {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 12px;
+padding: 40px 20px;
+text-align: center;
+font-size: 0.85rem;
+color: var(--ink-mid);
+}
+.sf-section {
+margin-bottom: 20px;
+}
+.sf-section-label {
+font-size: 0.68rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(--ink-mid);
+margin-bottom: 8px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.sf-vocab-add-btn {
+background: none;
+border: none;
+padding: 0 2px;
+margin: 0;
+font-size: 0.85rem;
+color: var(--ink-dim);
+cursor: pointer;
+line-height: 1;
+opacity: 0.5;
+transition: opacity 0.15s, color 0.15s;
+}
+.sf-vocab-add-btn:hover {
+opacity: 1;
+color: var(--accent);
+}
+.sf-label-hint {
+font-size: 0.62rem;
+font-weight: 400;
+text-transform: none;
+letter-spacing: 0;
+color: var(--ink-lt);
+font-style: italic;
+}
+.sf-section-divider-label {
+font-size: 0.68rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(--amber);
+margin: 16px 0 8px;
+padding-top: 16px;
+border-top: 1px solid var(--border-lt);
+}
+.sf-toggle-row {
+display: flex;
+gap: 6px;
+}
+.sf-toggle {
+padding: 7px 16px;
+border-radius: var(--radius-sm);
+font-size: 0.82rem;
+font-weight: 600;
+border: 1.5px solid var(--border);
+background: var(--cream);
+color: var(--ink-mid);
+transition: all var(--transition);
+}
+.sf-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.sf-toggle.active {
+background: var(--amber);
+border-color: var(--amber);
+color: var(--white);
+}
+.sf-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+margin-bottom: 8px;
+}
+.sf-chip {
+padding: 4px 10px;
+border-radius: 20px;
+font-size: 0.76rem;
+font-weight: 500;
+border: 1px solid var(--border);
+background: var(--cream);
+color: var(--ink-mid);
+transition: all var(--transition);
+cursor: pointer;
+white-space: nowrap;
+}
+.sf-chip:hover { border-color: var(--amber-lt); color: var(--amber); }
+.sf-chip.active {
+background: var(--amber-bg);
+border-color: var(--amber);
+color: var(--amber);
+font-weight: 600;
+}
+.sf-chip.active.auto-selected {
+border-style: dashed;
+}
+.sf-chip.active.auto-selected::before {
+content: '✦ ';
+font-size: 0.65rem;
+opacity: 0.85;
+}
+.sf-chip-redundant,
+.sf-chip-redundant:hover {
+opacity: 0.4;
+cursor: not-allowed;
+border-style: dotted;
+color: var(--ink-lt);
+}
+.sf-chip-wrap {
+position: relative;
+display: inline-flex;
+}
+.sf-chip-wrap .chip-tip {
+position: absolute;
+bottom: calc(100% + 8px);
+left: 50%;
+transform: translateX(-50%);
+background: var(--amber);
+color: #1a1208;
+font-size: 0.72rem;
+line-height: 1.5;
+padding: 7px 11px;
+border-radius: var(--radius-sm);
+width: max-content;
+max-width: 220px;
+white-space: normal;
+text-align: left;
+pointer-events: none;
+opacity: 0;
+transition: opacity 150ms ease;
+z-index: 9999;
+font-weight: 500;
+box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+/* Clamp so left-edge chips don't go off-screen */
+max-width: min(220px, calc(100vw - 24px));
+}
+.sf-chip-wrap .chip-tip::after {
+content: '';
+position: absolute;
+top: 100%;
+left: 50%;
+transform: translateX(-50%);
+border: 5px solid transparent;
+border-top-color: var(--amber);
+}
+.sf-chip-wrap:hover .chip-tip { opacity: 1; }
+/* Prevent left-edge overflow */
+.sf-chip-wrap:first-child .chip-tip,
+.sf-chip-wrap:nth-child(2) .chip-tip {
+left: 0;
+transform: none;
+}
+.sf-chip-wrap:first-child .chip-tip::after,
+.sf-chip-wrap:nth-child(2) .chip-tip::after {
+left: 20px;
+transform: none;
+}
+.sf-asset-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+min-height: 32px;
+}
+.sf-asset-group { margin-bottom: 10px; }
+.sf-asset-group:last-child { margin-bottom: 0; }
+.sf-asset-group-label {
+font-size: 0.68rem;
+font-weight: 700;
+color: var(--ink-subtle, #888);
+text-transform: uppercase;
+letter-spacing: 0.06em;
+margin-bottom: 5px;
+}
+.sf-asset-group-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+}
+.sf-asset-chip {
+padding: 4px 10px;
+border-radius: 20px;
+font-size: 0.76rem;
+font-weight: 500;
+border: 1px solid var(--border);
+background: var(--cream);
+color: var(--ink-mid);
+transition: all var(--transition);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 4px;
+}
+.sf-asset-chip:hover { border-color: var(--amber-lt); color: var(--amber); }
+.sf-asset-chip.active {
+background: #EEF4FF;
+border-color: #3060B0;
+color: #3060B0;
+}
+.sf-asset-chip.active.type-location { background: #F0F8EE; border-color: #2E6E2E; color: #2E6E2E; }
+.sf-asset-chip.active.type-prop { background: #FDF4E8; border-color: #8A5000; color: #8A5000; }
+.sf-asset-chip.active.type-era { background: #F8EEFF; border-color: #6030A0; color: #6030A0; }
+.sf-asset-chip.active.type-style { background: #FFF0F5; border-color: #A03060; color: #A03060; }
+.sf-asset-empty {
+font-size: 0.76rem;
+color: var(--ink-lt);
+font-style: italic;
+padding: 4px 0;
+}
+.sf-frame-cards {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+row-gap: 8px;
+gap: 6px;
+margin-bottom: 8px;
+}
+.sf-frame-card {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 3px;
+padding: 10px 4px 8px;
+border: 1.5px solid var(--border);
+border-radius: var(--radius);
+background: var(--cream);
+cursor: pointer;
+transition: all var(--transition);
+text-align: center;
+}
+.sf-frame-card:hover { border-color: var(--amber-lt); background: var(--amber-bg); }
+.sf-frame-card.active { border-color: var(--amber); background: var(--amber-bg); }
+.sf-frame-icon { font-size: 1.3rem; }
+.sf-frame-label { font-size: 0.68rem; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.sf-frame-sub { font-size: 0.6rem; color: var(--ink-lt); }
+.sf-frame-card.active .sf-frame-label { color: var(--amber); }
+.sf-role-order-hint {
+  font-size: 0.7rem;
+  color: var(--ink-lt);
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-lt);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.sf-role-order-hint b { color: var(--ink); }
+.sf-role-order-warn { color: #b35900; font-weight: 600; }
+.sf-auto-banner {
+background: var(--amber-bg);
+border: 1px solid rgba(200,134,10,0.25);
+border-radius: var(--radius-sm);
+padding: 8px 10px;
+margin-top: 6px;
+}
+.sf-auto-label {
+font-size: 0.62rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(--amber);
+display: block;
+margin-bottom: 5px;
+}
+.sf-auto-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 4px;
+}
+.sf-auto-chip-item {
+background: rgba(200,134,10,0.12);
+border: 1px solid rgba(200,134,10,0.3);
+color: var(--amber);
+font-size: 0.68rem;
+padding: 2px 8px;
+border-radius: 20px;
+}
+.sf-ratio-cards {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+}
+.sf-ratio-card {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 4px;
+padding: 8px 10px;
+border: 1.5px solid var(--border);
+border-radius: var(--radius);
+background: var(--cream);
+cursor: pointer;
+transition: all var(--transition);
+}
+.sf-ratio-card:hover { border-color: var(--amber-lt); background: var(--amber-bg); }
+.sf-ratio-card.active { border-color: var(--amber); background: var(--amber-bg); }
+.sf-ratio-preview {
+background: var(--border);
+border-radius: 2px;
+}
+.sf-ratio-card.active .sf-ratio-preview { background: var(--amber); }
+.ratio-21-9  { width: 42px; height: 18px; }
+.ratio-16-9  { width: 32px; height: 18px; }
+.ratio-9-16  { width: 18px; height: 32px; }
+.ratio-1-1   { width: 24px; height: 24px; }
+.ratio-4-5   { width: 20px; height: 25px; }
+.ratio-3-2   { width: 30px; height: 20px; }
+.ratio-2-3   { width: 20px; height: 30px; }
+.sf-ratio-label { font-size: 0.7rem; font-weight: 700; color: var(--ink); }
+.sf-ratio-sub { font-size: 0.6rem; color: var(--ink-lt); }
+.sf-ratio-card.active .sf-ratio-label { color: var(--amber); }
+.sf-camera-auto-display {
+background: var(--cream-mid);
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+padding: 8px 12px;
+font-size: 0.78rem;
+color: var(--ink-mid);
+margin-bottom: 8px;
+font-style: italic;
+}
+.sf-toggles-grid {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.sf-toggle-switch {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 8px 10px;
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+background: var(--cream);
+cursor: pointer;
+transition: background var(--transition);
+}
+.sf-toggle-switch:hover { background: var(--cream-mid); }
+.sf-toggle-switch input { display: none; }
+.sf-toggle-switch-track {
+width: 32px;
+height: 18px;
+border-radius: 9px;
+background: var(--border);
+position: relative;
+flex-shrink: 0;
+transition: background var(--transition);
+}
+.sf-toggle-switch-track::after {
+content: '';
+position: absolute;
+width: 12px; height: 12px;
+border-radius: 50%;
+background: var(--white);
+top: 3px; left: 3px;
+transition: transform var(--transition);
+box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.sf-toggle-switch input:checked ~ .sf-toggle-switch-track {
+background: var(--amber);
+}
+.sf-toggle-switch input:checked ~ .sf-toggle-switch-track::after {
+transform: translateX(14px);
+}
+.sf-toggle-switch-info { display: flex; flex-direction: column; gap: 1px; }
+.sf-toggle-switch-name { font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+.sf-toggle-switch-desc { font-size: 0.68rem; color: var(--ink-lt); }
+.sf-platform-section { margin-top: 8px; }
+.sf-platform-cards {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+}
+.sf-platform-card {
+padding: 10px 14px;
+border: 1.5px solid var(--border);
+border-radius: var(--radius);
+background: var(--cream);
+cursor: pointer;
+transition: all var(--transition);
+text-align: center;
+min-width: 110px;
+}
+.sf-platform-card:hover { border-color: var(--amber-lt); background: var(--amber-bg); }
+.sf-platform-card.active { border-color: var(--amber); background: var(--amber-bg); }
+.sf-platform-name { font-size: 0.8rem; font-weight: 700; color: var(--ink); }
+.sf-platform-card.active .sf-platform-name { color: var(--amber); }
+.sf-platform-caps { font-size: 0.62rem; color: var(--ink-lt); margin-top: 2px; }
+.sf-platform-warning {
+background: #FFF8E0;
+border: 1px solid #E8C040;
+border-radius: var(--radius-sm);
+padding: 8px 12px;
+font-size: 0.78rem;
+color: #7A5800;
+margin-top: 8px;
+line-height: 1.4;
+}
+.sf-textarea {
+width: 100%;
+margin-top: 4px;
+font-size: 0.82rem;
+}
+.sf-output-panel {
+position: sticky;
+top: 128px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+.sf-richness-row {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.sf-richness-label {
+font-size: 0.68rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(--ink-lt);
+}
+.sf-richness-dots {
+display: flex;
+gap: 4px;
+}
+.sf-dot {
+width: 10px; height: 10px;
+border-radius: 50%;
+background: var(--border);
+transition: background var(--transition);
+}
+.sf-dot.active { background: var(--amber); }
+.sf-richness-text {
+font-size: 0.72rem;
+font-weight: 600;
+color: var(--ink-mid);
+}
+.sf-output-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+}
+.sf-output-platform-badge {
+display: inline-flex;
+align-items: center;
+background: var(--amber-bg);
+border: 1px solid rgba(200,134,10,0.3);
+color: var(--amber);
+font-size: 0.72rem;
+font-weight: 700;
+padding: 3px 10px;
+border-radius: 20px;
+letter-spacing: 0.04em;
+}
+.sf-auto-toggle-btn {
+font-size: 0.7rem;
+color: var(--ink-lt);
+padding: 3px 8px;
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+background: var(--cream);
+cursor: pointer;
+transition: all var(--transition);
+}
+.sf-auto-toggle-btn:hover { border-color: var(--amber); color: var(--amber); }
+.sf-auto-toggle-btn.active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.sf-prompt-box {
+background: var(--white);
+border: 1.5px solid var(--border);
+border-radius: var(--radius-lg);
+padding: 18px;
+min-height: 160px;
+font-size: 0.88rem;
+line-height: 1.7;
+color: var(--ink);
+font-family: var(--font-sans);
+white-space: pre-wrap;
+word-break: break-word;
+box-shadow: var(--shadow-sm);
+}
+.sf-prompt-empty {
+color: var(--ink-lt);
+font-style: italic;
+font-size: 0.82rem;
+}
+.sf-prompt-auto {
+color: var(--amber);
+}
+.sf-params-label {
+font-size: 0.65rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(--ink-lt);
+margin-bottom: 6px;
+}
+.sf-params-value {
+background: var(--cream-mid);
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+padding: 8px 12px;
+font-family: var(--font-mono);
+font-size: 0.82rem;
+color: var(--ink-mid);
+word-break: break-all;
+}
+.sf-auto-detail-value {
+background: var(--amber-bg);
+border: 1px solid rgba(200,134,10,0.2);
+border-radius: var(--radius-sm);
+padding: 8px 12px;
+font-size: 0.78rem;
+color: var(--ink-mid);
+line-height: 1.6;
+}
+.sf-platform-tips {
+background: var(--cream-mid);
+border: 1px solid var(--border-lt);
+border-radius: var(--radius);
+padding: 12px 14px;
+font-size: 0.76rem;
+color: var(--ink-mid);
+line-height: 1.6;
+display: none;
+}
+.sf-platform-tips.visible { display: block; }
+.sf-tips-title {
+font-weight: 700;
+color: var(--ink);
+margin-bottom: 4px;
+font-size: 0.72rem;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+}
+.sb-step { max-width: 820px; }
+.sb-card {
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius-lg);
+padding: 20px 22px;
+margin-bottom: 16px;
+box-shadow: var(--shadow-sm);
+}
+.sb-card-title {
+font-size: 0.78rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(--ink);
+margin-bottom: 8px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.sb-card-hint {
+font-size: 0.78rem;
+color: var(--ink-lt);
+margin-bottom: 12px;
+line-height: 1.5;
+}
+.sb-story-input {
+width: 100%;
+font-size: 0.88rem;
+line-height: 1.6;
+}
+.sb-optional {
+font-size: 0.65rem;
+font-weight: 400;
+text-transform: none;
+letter-spacing: 0;
+color: var(--ink-lt);
+font-style: italic;
+}
+.sb-online-badge {
+font-size: 0.65rem;
+font-weight: 600;
+text-transform: none;
+letter-spacing: 0;
+background: var(--amber-bg);
+color: var(--amber);
+border: 1px solid rgba(200,134,10,0.3);
+border-radius: 20px;
+padding: 2px 8px;
+}
+.sb-config-row {
+display: flex;
+gap: 32px;
+flex-wrap: wrap;
+}
+.sb-config-group { display: flex; flex-direction: column; gap: 8px; }
+.sb-config-label {
+font-size: 0.72rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--ink-mid);
+}
+.sb-panel-count-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.sb-mj-disabled {
+opacity: 0.35;
+cursor: not-allowed !important;
+text-decoration: line-through;
+}
+.sb-style-row {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 12px;
+}
+.sb-api-card { border-color: rgba(200,134,10,0.3); background: var(--amber-bg); }
+.sb-api-row {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.sb-api-row .input { flex: 1; font-family: var(--font-mono); font-size: 0.8rem; }
+.sb-api-hint { font-size: 0.7rem; color: var(--ink-lt); white-space: nowrap; }
+.sb-generate-row {
+display: flex;
+align-items: center;
+gap: 14px;
+margin-top: 4px;
+margin-bottom: 32px;
+}
+.sb-generate-btn { padding: 10px 24px; font-size: 0.9rem; }
+.sb-generate-hint { font-size: 0.78rem; color: var(--ink-lt); font-style: italic; }
+.sb-panels-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 24px;
+gap: 16px;
+}
+.sb-panels-title {
+font-family: var(--font-serif);
+font-size: 1.4rem;
+color: var(--charcoal);
+}
+.sb-panels-sub {
+font-size: 0.75rem;
+color: var(--ink-lt);
+margin-top: 4px;
+}
+.sb-panels-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sb-undo-bar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: var(--amber-bg);
+border: 1px solid rgba(200,134,10,0.3);
+border-radius: var(--radius-sm);
+padding: 8px 14px;
+margin-bottom: 16px;
+gap: 12px;
+animation: sb-fadein 200ms ease;
+}
+@keyframes sb-fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.sb-undo-msg {
+font-size: 0.78rem;
+color: var(--ink-mid);
+}
+.sb-undo-msg strong { color: var(--amber); }
+.sb-panels-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+gap: 14px;
+margin-bottom: 48px;
+}
+.sb-panel-card {
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius);
+overflow: hidden;
+box-shadow: var(--shadow-sm);
+display: flex;
+flex-direction: column;
+}
+.sb-panel-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 8px 12px 7px;
+border-bottom: 1px solid var(--border-lt);
+background: var(--cream);
+gap: 8px;
+}
+.sb-panel-num {
+font-size: 0.62rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(--amber);
+flex-shrink: 0;
+}
+.sb-panel-shot-badge {
+display: inline-flex;
+align-items: center;
+gap: 5px;
+font-size: 0.6rem;
+font-weight: 700;
+padding: 2px 7px 2px 4px;
+border-radius: 20px;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+flex-shrink: 0;
+}
+.sb-shot-establishing { background: #EEF4FF; color: #3060B0; }
+.sb-shot-wide         { background: #F0F8EE; color: #2E6E2E; }
+.sb-shot-medium       { background: #FDF4E8; color: #8A5000; }
+.sb-shot-closeup      { background: #F8EEFF; color: #6030A0; }
+.sb-shot-closing      { background: #FFF0F5; color: #A03060; }
+.sb-shot-default      { background: var(--cream-dark); color: var(--ink-mid); }
+.sb-shot-diagram {
+width: 18px;
+height: 13px;
+flex-shrink: 0;
+}
+.sb-panel-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.sb-panel-beat {
+font-size: 0.78rem;
+color: var(--ink);
+line-height: 1.45;
+border: none;
+background: var(--cream);
+border-radius: var(--radius-sm);
+padding: 6px 8px;
+resize: vertical;
+width: 100%;
+font-family: var(--font-sans);
+min-height: 48px;
+}
+.sb-panel-beat:focus { outline: 2px solid var(--amber); outline-offset: -1px; }
+.sb-panel-section-label {
+font-size: 0.58rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(--ink-lt);
+margin-bottom: 2px;
+}
+.sb-panel-prompt {
+background: var(--cream);
+border: 1px solid var(--border-lt);
+border-radius: var(--radius-sm);
+padding: 8px 10px;
+font-size: 0.75rem;
+line-height: 1.45;
+color: var(--ink);
+white-space: pre-wrap;
+word-break: break-word;
+max-height: 180px;
+overflow-y: auto;
+flex: 1;
+transition: background 400ms ease;
+}
+.sb-panel-footer {
+display: flex;
+gap: 6px;
+padding: 10px 14px 14px;
+border-top: 1px solid var(--border-lt);
+}
+.sb-regen-btn {
+font-size: 0.72rem;
+padding: 5px 10px;
+}
+.sb-loading {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 60px 20px;
+gap: 14px;
+color: var(--ink-lt);
+}
+.sb-spinner {
+width: 28px; height: 28px;
+border: 2.5px solid var(--border);
+border-top-color: var(--amber);
+border-radius: 50%;
+animation: sb-spin 0.8s linear infinite;
+}
+@keyframes sb-spin { to { transform: rotate(360deg); } }
+.sb-loading-text { font-size: 0.82rem; font-style: italic; }
+.sb-story-wrap {
+position: relative;
+}
+.sb-story-input {
+width: 100%;
+font-size: 0.88rem;
+line-height: 1.6;
+position: relative;
+z-index: 1;
+}
+.sb-at-picker {
+position: absolute;
+top: calc(100% + 4px);
+left: 0;
+width: 280px;
+background: var(--white);
+border: 1.5px solid var(--amber);
+border-radius: var(--radius);
+box-shadow: var(--shadow-lg);
+z-index: 200;
+overflow: hidden;
+max-height: 220px;
+overflow-y: auto;
+}
+.sb-at-picker-list { display: flex; flex-direction: column; }
+.sb-at-item {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 8px 12px;
+cursor: pointer;
+transition: background var(--transition);
+border-bottom: 1px solid var(--border-lt);
+}
+.sb-at-item:last-child { border-bottom: none; }
+.sb-at-item:hover,
+.sb-at-item.focused { background: var(--amber-bg); }
+.sb-at-item-icon {
+font-size: 0.9rem;
+width: 20px;
+text-align: center;
+flex-shrink: 0;
+}
+.sb-at-item-name {
+font-size: 0.82rem;
+font-weight: 600;
+color: var(--ink);
+flex: 1;
+}
+.sb-at-item-type {
+font-size: 0.62rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--ink-lt);
+}
+.sb-at-empty {
+padding: 12px;
+font-size: 0.78rem;
+color: var(--ink-lt);
+font-style: italic;
+text-align: center;
+}
+.sb-story-display {
+display: none; /* used only for highlight rendering if needed */
+}
+.sb-unlinked-warn {
+margin-top: 8px;
+background: #FFFBEC;
+border: 1px solid #E8D060;
+border-radius: var(--radius-sm);
+padding: 8px 12px;
+font-size: 0.76rem;
+color: #6A5000;
+line-height: 1.5;
+}
+.sb-unlinked-warn strong { color: #8A6800; }
+.sb-mentioned-assets {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+margin-top: 8px;
+}
+.sb-mentioned-chip {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+padding: 3px 8px;
+border-radius: 20px;
+font-size: 0.72rem;
+font-weight: 600;
+border: 1px solid;
+}
+.sb-chip-character { background: #EEF4FF; color: #3060B0; border-color: #A0B8E0; }
+.sb-chip-location  { background: #F0F8EE; color: #2E6E2E; border-color: #90C890; }
+.sb-chip-prop      { background: #FDF4E8; color: #8A5000; border-color: #D4A060; }
+.sb-chip-era       { background: #F8EEFF; color: #6030A0; border-color: #C0A0D8; }
+.sb-chip-style     { background: #FFF0F5; color: #A03060; border-color: #E0A0B8; }
+.sf-chip-custom {
+border-style: dashed;
+border-color: var(--amber);
+color: var(--amber);
+}
+.sf-chip-custom.active { border-style: solid; }
+.sf-chip-add {
+border: 1.5px dashed var(--border);
+color: var(--ink-lt);
+font-size: 0.82rem;
+padding: 3px 9px;
+border-radius: 20px;
+background: transparent;
+transition: all var(--transition);
+}
+.sf-chip-add:hover {
+border-color: var(--amber);
+color: var(--amber);
+background: var(--amber-bg);
+}
+.sf-chip-input {
+padding: 3px 10px;
+border-radius: 20px;
+font-size: 0.76rem;
+font-weight: 500;
+border: 1.5px solid var(--amber);
+background: var(--amber-bg);
+color: var(--ink);
+outline: none;
+font-family: var(--font-sans);
+min-width: 80px;
+max-width: 200px;
+}
+.sb-composition-block {
+background: #FFFBF0;
+border: 1.5px solid var(--amber);
+border-radius: var(--radius);
+padding: 10px 12px;
+}
+.sb-composition-label {
+font-size: 0.62rem;
+font-weight: 700;
+color: var(--amber);
+letter-spacing: 0.08em;
+text-transform: uppercase;
+margin-bottom: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.sb-composition-label span {
+font-weight: 400;
+color: var(--ink-lt);
+text-transform: none;
+letter-spacing: 0;
+font-size: 0.68rem;
+font-style: italic;
+}
+.sb-composition-textarea {
+width: 100%;
+border: none;
+background: transparent;
+font-size: 0.76rem;
+color: var(--ink);
+line-height: 1.6;
+resize: none;
+font-family: var(--font-sans);
+outline: none;
+min-height: 52px;
+padding: 2px 0;
+}
+.sb-composition-textarea:focus {
+background: rgba(200,134,10,0.05);
+border-radius: var(--radius-sm);
+padding: 2px 4px;
+}
+MULTI-IMAGE SLOTS
+══════════════════════════════════════════════════════════════ */
+.asset-img-slots {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+gap: 10px;
+margin-bottom: 4px;
+}
+.asset-img-slot {
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+.asset-img-slot-label {
+font-size: 0.72rem;
+font-weight: 700;
+color: var(--ink);
+letter-spacing: 0.02em;
+}
+.asset-img-slot-hint {
+font-size: 0.66rem;
+color: var(--ink-lt);
+line-height: 1.4;
+min-height: 28px;
+}
+.ia-focus-hint {
+font-size: 0.68rem;
+padding: 5px 8px;
+margin-bottom: 2px;
+}
+.asset-img-slot-upload {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 100%;
+aspect-ratio: 1 / 1;
+border: 2px dashed var(--border);
+border-radius: var(--radius);
+cursor: pointer;
+background: var(--cream-mid);
+transition: border-color var(--transition), background var(--transition);
+font-size: 1.4rem;
+color: var(--ink-lt);
+}
+.asset-img-slot-upload:hover {
+border-color: var(--amber);
+background: var(--amber-bg);
+color: var(--amber);
+}
+.asset-img-slot-upload input[type="file"] {
+display: none;
+}
+.asset-img-slot-preview {
+position: relative;
+width: 100%;
+border-radius: var(--radius);
+overflow: hidden;
+border: 1px solid var(--border);
+background: var(--cream-dark);
+}
+.asset-img-slot-preview img {
+width: 100%;
+height: auto;
+max-height: 260px;
+object-fit: contain;
+display: block;
+cursor: zoom-in;
+}
+.asset-img-slot-remove {
+position: absolute;
+top: 4px;
+right: 4px;
+background: rgba(30,28,24,0.75);
+color: #fff;
+border: none;
+border-radius: 50%;
+width: 20px;
+height: 20px;
+font-size: 0.65rem;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+opacity: 0;
+transition: opacity var(--transition);
+line-height: 1;
+}
+.asset-img-slot-preview:hover .asset-img-slot-remove { opacity: 1; }
+.asset-img-slot-analysed {
+position: absolute;
+bottom: 4px;
+right: 4px;
+background: var(--amber);
+color: #fff;
+border-radius: 50%;
+width: 18px;
+height: 18px;
+font-size: 0.6rem;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 700;
+}
+SEGMENT 6 — POLISH
+══════════════════════════════════════════════════════════════ */
+.view {
+display: none;
+animation: none;
+}
+.view.active {
+display: block;
+animation: view-enter 180ms ease both;
+}
+@keyframes view-enter {
+from { opacity: 0; transform: translateY(6px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+.nav-tab {
+transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+.sb-panel-card {
+animation: panel-enter 220ms ease both;
+}
+@keyframes panel-enter {
+from { opacity: 0; transform: translateY(8px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+.sb-loading {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 14px;
+padding: 56px 24px;
+text-align: center;
+}
+.sb-spinner {
+width: 32px;
+height: 32px;
+border: 3px solid var(--border-lt);
+border-top-color: var(--amber);
+border-radius: 50%;
+animation: sb-spin 0.75s linear infinite;
+}
+.sb-loading-label {
+font-size: 0.92rem;
+font-weight: 600;
+color: var(--ink);
+letter-spacing: 0.01em;
+}
+.sb-loading-sub {
+font-size: 0.78rem;
+color: var(--ink-lt);
+font-style: italic;
+margin-top: -6px;
+}
+.sb-loading-steps {
+display: flex;
+flex-direction: column;
+gap: 4px;
+margin-top: 4px;
+}
+.sb-loading-step {
+font-size: 0.76rem;
+color: var(--ink-lt);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.sb-loading-step.done   { color: var(--amber); }
+.sb-loading-step.active { color: var(--ink); font-weight: 500; }
+.sb-loading-step::before {
+content: '○';
+font-size: 0.65rem;
+flex-shrink: 0;
+}
+.sb-loading-step.done::before   { content: '●'; color: var(--amber); }
+.sb-loading-step.active::before { content: '◉'; color: var(--amber); }
+.sb-onboarding-banner {
+background: var(--cream-mid);
+border: 1px solid var(--border);
+border-radius: var(--radius-lg);
+padding: 20px 24px;
+margin-bottom: 24px;
+position: relative;
+animation: view-enter 250ms ease both;
+}
+.sb-onboarding-title {
+font-size: 0.88rem;
+font-weight: 700;
+color: var(--ink);
+margin-bottom: 12px;
+letter-spacing: 0.02em;
+text-transform: uppercase;
+}
+.sb-onboarding-steps {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-bottom: 14px;
+}
+.sb-onboarding-step {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+font-size: 0.82rem;
+color: var(--ink-lt);
+line-height: 1.5;
+}
+.sb-onboarding-step-num {
+background: var(--amber);
+color: var(--white);
+border-radius: 50%;
+width: 18px;
+height: 18px;
+font-size: 0.68rem;
+font-weight: 700;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+margin-top: 1px;
+}
+.sb-onboarding-extras {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+padding-top: 10px;
+border-top: 1px solid var(--border-lt);
+}
+.sb-onboarding-tip {
+font-size: 0.75rem;
+color: var(--ink-lt);
+background: var(--white);
+border: 1px solid var(--border-lt);
+border-radius: var(--radius);
+padding: 3px 8px;
+}
+.sb-onboarding-dismiss {
+position: absolute;
+top: 12px;
+right: 14px;
+background: none;
+border: none;
+font-size: 1rem;
+color: var(--ink-lt);
+cursor: pointer;
+padding: 2px 6px;
+border-radius: var(--radius-sm);
+transition: background var(--transition);
+line-height: 1;
+}
+.sb-onboarding-dismiss:hover { background: var(--border-lt); color: var(--ink); }
+TABLET RESPONSIVENESS — 768px to 1100px
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+.page-wrap { padding: 24px 16px 48px; }
+.app-header { padding: 0 16px; }
+.wordmark-sub { display: none; }
+.sf-layout {
+grid-template-columns: 1fr;
+}
+.sf-output-panel {
+position: static;
+top: auto;
+}
+.sb-panels-grid {
+grid-template-columns: 1fr;
+}
+}
+@media (max-width: 860px) {
+.nav-tab { padding: 0 12px; font-size: 0.78rem; }
+.nav-badge { display: none; }
+.asset-grid { grid-template-columns: 1fr; }
+.sf-asset-selector { gap: 6px; }
+.sb-step-header h2 { font-size: 1rem; }
+.modal { max-width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.modal-overlay { align-items: flex-end; padding: 0; }
+}
+SETTINGS — TABS
+══════════════════════════════════════════════════════════════ */
+.settings-tabs {
+display: flex;
+gap: 0;
+border-bottom: 2px solid var(--border);
+padding: 0 20px;
+background: var(--cream);
+}
+.settings-tab {
+padding: 10px 18px;
+font-size: 0.85rem;
+font-weight: 600;
+color: var(--ink-mid);
+background: none;
+border: none;
+border-bottom: 2px solid transparent;
+margin-bottom: -2px;
+cursor: pointer;
+transition: color 0.15s, border-color 0.15s;
+}
+.settings-tab:hover { color: var(--ink); }
+.settings-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+VOCABULARY MANAGER
+══════════════════════════════════════════════════════════════ */
+.vm-root { display: flex; flex-direction: column; gap: 14px; }
+.vm-toolbar {
+display: flex;
+gap: 8px;
+justify-content: flex-end;
+padding: 4px 0 10px;
+border-bottom: 1px solid var(--border-lt);
+}
+.vm-layout {
+display: grid;
+grid-template-columns: 210px 1fr;
+gap: 20px;
+min-height: 0;
+}
+.vm-genre-list {
+display: flex;
+flex-direction: column;
+gap: 2px;
+border-right: 1px solid var(--border-lt);
+padding-right: 10px;
+}
+.vm-genre-item {
+display: flex;
+align-items: center;
+gap: 6px;
+padding: 9px 12px;
+border-radius: var(--radius);
+cursor: pointer;
+font-size: 0.88rem;
+color: var(--ink-mid);
+transition: background 0.12s, color 0.12s;
+}
+.vm-genre-item:hover { background: var(--cream-mid); color: var(--ink); }
+.vm-genre-item--active { background: var(--amber-bg); color: var(--amber); font-weight: 600; }
+.vm-genre-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vm-genre-delete {
+flex-shrink: 0;
+opacity: 0;
+background: none;
+border: none;
+color: var(--red);
+font-size: 0.7rem;
+padding: 2px 4px;
+cursor: pointer;
+border-radius: 3px;
+line-height: 1;
+}
+.vm-genre-item:hover .vm-genre-delete { opacity: 1; }
+.vm-add-genre-btn { margin-top: 6px; align-self: flex-start; }
+.vm-new-genre-input { font-size: 0.82rem; padding: 5px 8px; }
+.vm-cols {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 16px;
+overflow-y: auto;
+max-height: 460px;
+padding-right: 4px;
+}
+.vm-col {
+display: flex;
+flex-direction: column;
+gap: 8px;
+min-height: 0;
+}
+.vm-col-header {
+font-size: 0.72rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: var(--ink-mid);
+padding-bottom: 6px;
+border-bottom: 2px solid var(--border);
+}
+.vm-chip-list {
+flex: 1;
+display: flex;
+flex-wrap: wrap;
+align-content: flex-start;
+gap: 5px;
+}
+.vm-chip {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+background: var(--cream-mid);
+border: 1px solid var(--border);
+border-radius: 14px;
+padding: 5px 11px;
+font-size: 0.84rem;
+color: var(--ink);
+max-width: 100%;
+transition: border-color 0.1s, background 0.1s;
+}
+.vm-chip:hover { background: var(--cream-dark); border-color: var(--amber); }
+.vm-chip-label { cursor: pointer; }
+.vm-chip-label:hover { color: var(--amber); }
+.vm-chip-del {
+background: none;
+border: none;
+color: var(--ink-lt);
+font-size: 0.7rem;
+cursor: pointer;
+padding: 0 2px;
+line-height: 1;
+opacity: 0;
+transition: opacity 0.1s, color 0.1s;
+}
+.vm-chip:hover .vm-chip-del { opacity: 1; color: var(--red); }
+.vm-add-chip-row {
+display: flex;
+gap: 5px;
+padding-top: 8px;
+border-top: 1px dashed var(--border-lt);
+margin-top: auto;
+}
+.vm-add-chip-row .input {
+flex: 1;
+min-width: 0;
+font-size: 0.84rem;
+padding: 6px 10px;
+}
+.vm-add-chip-row .btn { flex-shrink: 0; }
+.vm-empty {
+grid-column: 1 / -1;
+color: var(--ink-lt);
+font-size: 0.85rem;
+padding: 24px 0;
+text-align: center;
+}
+@media (max-width: 860px) {
+.vm-layout { grid-template-columns: 1fr; }
+.vm-genre-list { border-right: none; border-bottom: 1px solid var(--border-lt); padding-right: 0; padding-bottom: 8px; flex-direction: row; flex-wrap: wrap; }
+.vm-cols { grid-template-columns: repeat(2, 1fr); }
+}
+IMAGE ANALYSER  (Feature 3)
+══════════════════════════════════════════════════════════════ */
+.ia-analyse-btn {
+position: absolute;
+bottom: 6px;
+left: 6px;
+background: rgba(30,28,24,0.80);
+color: #FAF7F2;
+border: none;
+border-radius: var(--radius-sm);
+font-size: 0.70rem;
+font-weight: 600;
+letter-spacing: 0.02em;
+padding: 3px 8px;
+cursor: pointer;
+transition: background 0.15s;
+backdrop-filter: blur(4px);
+z-index: 3;
+}
+.ia-analyse-btn:hover:not(:disabled) { background: var(--amber); color: #fff; }
+.ia-analyse-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.ia-result {
+margin-top: 8px;
+background: var(--amber-bg);
+border: 1px solid var(--amber);
+border-radius: var(--radius-sm);
+padding: 8px 10px;
+font-size: 0.78rem;
+color: var(--ink);
+line-height: 1.5;
+}
+.ia-result-label {
+font-size: 0.68rem;
+font-weight: 700;
+color: var(--amber);
+letter-spacing: 0.06em;
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+.ia-result-text {
+color: var(--ink-mid);
+margin-bottom: 8px;
+}
+.ia-merge-btn {
+background: none;
+border: 1px solid var(--amber);
+color: var(--amber);
+border-radius: var(--radius-sm);
+font-size: 0.72rem;
+font-weight: 600;
+padding: 3px 10px;
+cursor: pointer;
+transition: background 0.15s, color 0.15s;
+}
+.ia-merge-btn:hover { background: var(--amber); color: #fff; }
+#ia-batch-row {
+margin-top: 12px;
+padding-top: 10px;
+border-top: 1px dashed var(--border-lt);
+}
+#ia-batch-btn {
+display: inline-flex;
+align-items: center;
+gap: 5px;
+background: var(--cream-mid);
+border: 1px solid var(--border);
+color: var(--ink-mid);
+border-radius: var(--radius-sm);
+font-size: 0.78rem;
+font-weight: 600;
+padding: 6px 14px;
+cursor: pointer;
+transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#ia-batch-btn:hover {
+background: var(--amber-bg);
+border-color: var(--amber);
+color: var(--amber);
+}
+#img-lightbox-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(10,8,6,0.88);
+z-index: 9999;
+align-items: center;
+justify-content: center;
+cursor: zoom-out;
+}
+#img-lightbox-overlay.open { display: flex; }
+#img-lightbox-img {
+max-width: 92vw;
+max-height: 90vh;
+object-fit: contain;
+border-radius: var(--radius);
+box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+cursor: default;
+}
+#img-lightbox-close {
+position: fixed;
+top: 18px;
+right: 22px;
+background: rgba(30,28,24,0.75);
+color: #fff;
+border: none;
+border-radius: 50%;
+width: 34px;
+height: 34px;
+font-size: 1rem;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 10000;
+transition: background 0.15s;
+}
+#img-lightbox-close:hover { background: var(--red); }
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<header id="app-header">
+  <div class="wordmark">
+    <span class="wordmark-ss">SS</span><span class="wordmark-under">_</span><span class="wordmark-studio">Studio</span>
+    <span class="wordmark-version">v7.4.0</span>
+  </div>
+
+  <div class="header-right">
+    <div id="project-switcher-wrap">
+      <span id="project-label">Project</span>
+      <select id="project-select" title="Switch project"></select>
+      <button class="btn btn-primary btn-sm" id="btn-new-project-header" onclick="openProjectManager(true)" style="display:none">＋ New Project</button>
+      <button class="btn-icon" id="btn-manage-projects" data-tooltip="Manage projects" onclick="openProjectManager()">📁</button>
+    </div>
+    <div id="user-chip" title="Current user" style="display:none">
+      <div class="user-avatar" id="user-avatar-initial"></div>
+      <span id="user-chip-name"></span>
+    </div>
+    <button class="btn-icon" data-tooltip="Settings" onclick="openSettings()">⚙</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MAIN NAV                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<nav id="main-nav">
+  <button class="nav-tab active" data-view="library" onclick="switchView('library')">
+    Library <span class="nav-badge" id="nav-badge-library">0</span>
+  </button>
+  <button class="nav-tab" data-view="single" onclick="switchView('single')">
+    Single Frame
+  </button>
+  <button class="nav-tab" data-view="storyboard" onclick="switchView('storyboard')">
+    Storyboard
+  </button>
+  <button class="nav-tab" data-view="sequences" onclick="switchView('sequences')">
+    Sequences
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: LIBRARY                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-library" class="view active">
+  <div class="page-wrap">
+
+    <!-- No project state -->
+    <div id="no-project-state" style="display:none">
+      <div class="welcome-title">Build your <em>visual world</em>.</div>
+      <p class="welcome-sub">Start by creating a project. Your characters, locations, props, and periods will live here — ready to inject into every prompt.</p>
+      <button class="btn btn-primary" onclick="openProjectManager(true)">＋ Create first project</button>
+    </div>
+
+    <!-- Library content -->
+    <div id="library-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="library-project-name">Project Library</h1>
+          <p class="page-subtitle">Define assets once — reuse across every prompt. No AI needed.</p>
+          <button class="btn-link-sm" id="migrate-library-btn" onclick="runLibraryMigration()"
+            style="background:none;border:none;padding:0;margin-top:4px;font-size:0.72rem;color:var(--ink-lt);text-decoration:underline;cursor:pointer;">
+            Migrate existing assets to shared library
+          </button>
+          <button class="btn-link-sm" id="dedupe-library-btn" onclick="runLibraryDedupe()"
+            style="background:none;border:none;padding:0;margin-top:4px;margin-left:12px;font-size:0.72rem;color:var(--ink-lt);text-decoration:underline;cursor:pointer;">
+            Clean up duplicate assets
+          </button>
+        </div>
+        <button class="btn btn-primary" onclick="openAssetModal(null, getCurrentType())">
+          <span>＋</span> Add <span id="add-btn-type-label">Asset</span>
+        </button>
+      </div>
+
+      <!-- Asset type tabs -->
+      <div id="lib-type-tabs">
+        <button class="lib-type-tab active" data-type="character" onclick="switchAssetType('character')">
+          Characters <span class="lib-type-count" id="count-character">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="location" onclick="switchAssetType('location')">
+          Locations <span class="lib-type-count" id="count-location">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="prop" onclick="switchAssetType('prop')">
+          Props <span class="lib-type-count" id="count-prop">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="era" onclick="switchAssetType('era')">
+          Era &amp; Context <span class="lib-type-count" id="count-era">0</span>
+        </button>
+        <button class="lib-type-tab" data-type="style" onclick="switchAssetType('style')">
+          Background Style <span class="lib-type-count" id="count-style">0</span>
+        </button>
+      </div>
+
+      <!-- Asset grid -->
+      <div id="asset-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: SINGLE FRAME                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-single" class="view">
+  <div class="sf-layout">
+
+    <!-- LEFT: Layer Stack -->
+    <div class="sf-left" id="sf-left">
+
+      <!-- No project warning -->
+      <div id="sf-no-project" style="display:none">
+        <div class="sf-noproj-msg">
+          <p>Create a project first to use the Single Frame builder.</p>
+          <button class="btn btn-primary btn-sm" onclick="openProjectManager(true)">＋ Create Project</button>
+        </div>
+      </div>
+
+      <div id="sf-stack">
+
+        <!-- ONBOARDING BANNER — shown once, dismissible -->
+        <div class="sf-onboarding-banner" id="sf-onboarding-banner">
+          <div class="sf-onboarding-title">🎬 How to build a prompt</div>
+          <div class="sf-onboarding-steps">
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">1</span><span>Select your <strong>Library Assets</strong> — characters, locations, props you've defined. Their descriptions auto-inject into the prompt.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">2</span><span>Pick a <strong>Frame Size</strong> — the app auto-selects the right lens and depth of field for you.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">3</span><span>Describe the <strong>action or scene</strong> in the Subject field. Type <strong>@name</strong> to link a library asset inline.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">4</span><span>Adjust <strong>Lighting, Mood, and Quality</strong> as needed — or leave defaults. The prompt builds live on the right.</span></div>
+            <div class="sf-onboarding-step"><span class="sf-onboarding-step-num">5</span><span>Select your <strong>Platform</strong> at the bottom, copy the prompt, and paste into your AI image generator.</span></div>
+          </div>
+          <div class="sf-onboarding-extras">
+            <span class="sf-onboarding-tip">✦ <strong>Dashed amber chip</strong> = auto-suggested by the app. Click to change.</span>
+            <span class="sf-onboarding-tip">＋ <strong>Plus button</strong> on any chip group = add your own keyword. Right-click a custom chip to delete it.</span>
+            <span class="sf-onboarding-tip">🎭 <strong>Signature Techniques</strong> = advanced cinematic effects — toggle on for richer output.</span>
+          </div>
+          <button class="sf-onboarding-dismiss" onclick="dismissOnboarding()">✕ Got it</button>
+        </div>
+
+        <!-- OUTPUT TYPE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Output Type</div>
+          <div class="sf-toggle-row" id="sf-output-type">
+            <button class="sf-toggle active" data-val="still" onclick="setSFOutputType('still')">Still Image</button>
+            <button class="sf-toggle" data-val="motion" onclick="setSFOutputType('motion')">Motion Poster</button>
+          </div>
+        </div>
+
+        <!-- LAYER 1: LIBRARY ASSETS -->
+        <div class="sf-section">
+          <div class="sf-section-label">Library Assets <span class="sf-label-hint">auto-injects descriptions</span></div>
+          <div id="sf-asset-selector" class="sf-asset-chips"></div>
+        </div>
+
+        <!-- LAYER 2: GENRE / STYLE PRESET -->
+        <div class="sf-section">
+          <div class="sf-section-label">Genre / Style <span class="sf-label-hint">optional — loads vocabulary</span></div>
+          <div class="sf-chips" id="sf-genre-chips">
+            <!-- populated by renderSFGenreChips() on init -->
+          </div>
+        </div>
+
+        <!-- LAYER 3: SUBJECT -->
+        <div class="sf-section">
+          <div class="sf-section-label">Subject <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('subject')">⊕</button></div>
+          <div class="sf-chips" id="sf-subject-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-subject-text"
+              placeholder="Describe your subject — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-subject-text','sf-at-picker-subject','sf-at-list-subject')"
+              onkeydown="onSFFieldKeydown(event,'sf-subject-text','sf-at-picker-subject','sf-at-list-subject')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-subject" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-subject"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYER 4 & 5: FRAME SIZE + SHOT ANGLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Frame Size</div>
+          <div class="sf-frame-cards" id="sf-frame-cards">
+            <button class="sf-frame-card" data-val="face" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👁</div>
+              <div class="sf-frame-label">Face Only</div>
+              <div class="sf-frame-sub">Extreme close-up</div>
+            </button>
+            <button class="sf-frame-card" data-val="head" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🧑</div>
+              <div class="sf-frame-label">Head & Shoulders</div>
+              <div class="sf-frame-sub">Portrait</div>
+            </button>
+            <button class="sf-frame-card" data-val="waist" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🙆</div>
+              <div class="sf-frame-label">Waist Up</div>
+              <div class="sf-frame-sub">Medium shot</div>
+            </button>
+            <button class="sf-frame-card" data-val="fullbody" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🧍</div>
+              <div class="sf-frame-label">Full Body</div>
+              <div class="sf-frame-sub">Full figure</div>
+            </button>
+            <button class="sf-frame-card" data-val="wide" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🌄</div>
+              <div class="sf-frame-label">Wide / Scene</div>
+              <div class="sf-frame-sub">Environmental</div>
+            </button>
+            <button class="sf-frame-card" data-val="os" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🫂</div>
+              <div class="sf-frame-label">Over-the-Shoulder</div>
+              <div class="sf-frame-sub">Needs 2 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="twoshot" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👥</div>
+              <div class="sf-frame-label">Two Shot</div>
+              <div class="sf-frame-sub">Needs 2 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="threeshot" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">👨‍👩‍👦</div>
+              <div class="sf-frame-label">Three Shot</div>
+              <div class="sf-frame-sub">Needs 3 figures</div>
+            </button>
+            <button class="sf-frame-card" data-val="ecu" onclick="setSFFrame(this)">
+              <div class="sf-frame-icon">🔍</div>
+              <div class="sf-frame-label">ECU / Insert</div>
+              <div class="sf-frame-sub">Prop detail</div>
+            </button>
+          </div>
+          <!-- Multi-figure role order hint — shown when 2+ characters are
+               selected and an OS/Two Shot/Three Shot frame is active. Click
+               order on the asset chips sets the role: 1st selected = the
+               foreground/anchor figure (soft focus in OS), 2nd (and 3rd for
+               Three Shot) = the sharp subject(s). -->
+          <div id="sf-role-order-hint" style="display:none"></div>
+          <!-- Auto-inject banner -->
+          <div id="sf-auto-inject-banner" style="display:none">
+            <div class="sf-auto-banner">
+              <span class="sf-auto-label">Auto-added for this frame</span>
+              <div id="sf-auto-inject-chips" class="sf-auto-chips"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHOT ANGLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Shot Angle</div>
+          <div class="sf-chips single-select" id="sf-angle-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="eye level" onclick="toggleSFChip(this,'angle',true)">Eye Level</button><span class="chip-tip">Camera at subject's eye height. Natural, neutral — the way we normally see the world.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="low angle" onclick="toggleSFChip(this,'angle',true)">Low Angle</button><span class="chip-tip">Camera below the subject looking up. Makes the subject appear powerful, dominant, larger than life.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="high angle" onclick="toggleSFChip(this,'angle',true)">High Angle</button><span class="chip-tip">Camera above the subject looking down. Makes the subject appear smaller, vulnerable, or observed.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="bird's eye view" onclick="toggleSFChip(this,'angle',true)">Bird's Eye</button><span class="chip-tip">Directly overhead, looking straight down. Reveals layout and pattern. Subject becomes part of environment.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="over-the-shoulder" onclick="toggleSFChip(this,'angle',true)">Over-Shoulder</button><span class="chip-tip">Camera behind one character, facing another. Classic dialogue and confrontation framing.</span></span>
+            <span class="sf-chip-wrap">
+              <button class="sf-chip" id="sf-dutch-angle-chip" onclick="toggleDutchAngle(this)">Dutch Angle</button>
+              <span class="chip-tip">Camera tilted on its axis — creates unease, tension, or disorientation. Can combine with any vertical angle.</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- LAYER 6: ASPECT RATIO -->
+        <div class="sf-section">
+          <div class="sf-section-label">Aspect Ratio</div>
+          <div class="sf-ratio-cards" id="sf-ratio-cards">
+            <button class="sf-ratio-card" data-val="21:9" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-21-9"></div>
+              <div class="sf-ratio-label">21:9</div>
+              <div class="sf-ratio-sub">Cinematic</div>
+            </button>
+            <button class="sf-ratio-card" data-val="16:9" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-16-9"></div>
+              <div class="sf-ratio-label">16:9</div>
+              <div class="sf-ratio-sub">Landscape</div>
+            </button>
+            <button class="sf-ratio-card" data-val="9:16" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-9-16"></div>
+              <div class="sf-ratio-label">9:16</div>
+              <div class="sf-ratio-sub">Portrait</div>
+            </button>
+            <button class="sf-ratio-card" data-val="1:1" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-1-1"></div>
+              <div class="sf-ratio-label">1:1</div>
+              <div class="sf-ratio-sub">Square</div>
+            </button>
+            <button class="sf-ratio-card" data-val="4:5" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-4-5"></div>
+              <div class="sf-ratio-label">4:5</div>
+              <div class="sf-ratio-sub">Social</div>
+            </button>
+            <button class="sf-ratio-card" data-val="3:2" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-3-2"></div>
+              <div class="sf-ratio-label">3:2</div>
+              <div class="sf-ratio-sub">Classic</div>
+            </button>
+            <button class="sf-ratio-card" data-val="2:3" onclick="setSFRatio(this)">
+              <div class="sf-ratio-preview ratio-2-3"></div>
+              <div class="sf-ratio-label">2:3</div>
+              <div class="sf-ratio-sub">Tall</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- LAYER 7 & 8: WARDROBE & MATERIAL -->
+        <div class="sf-section">
+          <div class="sf-section-label">Wardrobe & Props <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('wardrobe')">⊕</button></div>
+          <div class="sf-chips" id="sf-wardrobe-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-wardrobe-text"
+              placeholder="Specific costume, fabric, accessories, props in hand — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-wardrobe-text','sf-at-picker-wardrobe','sf-at-list-wardrobe')"
+              onkeydown="onSFFieldKeydown(event,'sf-wardrobe-text','sf-at-picker-wardrobe','sf-at-list-wardrobe')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-wardrobe" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-wardrobe"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Material Condition</div>
+          <div class="sf-chips single-select" id="sf-condition-chips">
+            <button class="sf-chip" data-val="pristine" onclick="toggleSFChip(this,'condition',true)">Pristine</button>
+            <button class="sf-chip" data-val="well-maintained" onclick="toggleSFChip(this,'condition',true)">Well-maintained</button>
+            <button class="sf-chip" data-val="lightly worn" onclick="toggleSFChip(this,'condition',true)">Lightly Worn</button>
+            <button class="sf-chip" data-val="battle-worn" onclick="toggleSFChip(this,'condition',true)">Battle-worn</button>
+            <button class="sf-chip" data-val="aged" onclick="toggleSFChip(this,'condition',true)">Aged</button>
+            <button class="sf-chip" data-val="decayed" onclick="toggleSFChip(this,'condition',true)">Decayed</button>
+            <button class="sf-chip" data-val="mud-caked" onclick="toggleSFChip(this,'condition',true)">Mud-caked</button>
+            <button class="sf-chip" data-val="rain-soaked" onclick="toggleSFChip(this,'condition',true)">Rain-soaked</button>
+          </div>
+        </div>
+
+        <!-- LAYER 9: ENVIRONMENT -->
+        <div class="sf-section">
+          <div class="sf-section-label">Environment <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('env')">⊕</button></div>
+          <div class="sf-chips" id="sf-env-chips"></div>
+          <div style="position:relative">
+            <textarea class="input sf-textarea" id="sf-env-text"
+              placeholder="Setting, location — type @ to link a library asset"
+              rows="2"
+              oninput="onSFFieldInput(event,'sf-env-text','sf-at-picker-env','sf-at-list-env')"
+              onkeydown="onSFFieldKeydown(event,'sf-env-text','sf-at-picker-env','sf-at-list-env')"
+            ></textarea>
+            <div class="sb-at-picker" id="sf-at-picker-env" style="display:none">
+              <div class="sb-at-picker-list" id="sf-at-list-env"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYER 10 & 11: LIGHTING -->
+        <div class="sf-section">
+          <div class="sf-section-label">Lighting Setup</div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin-bottom:6px;font-style:italic;">Technique</div>
+          <div class="sf-chips single-select" id="sf-lighting-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Rembrandt lighting" onclick="toggleSFChip(this,'lighting-setup',true)">Rembrandt</button><span class="chip-tip">Warm triangle of light on one cheek, the other side falls into shadow. Classic portrait drama.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="rim lighting" onclick="toggleSFChip(this,'lighting-setup',true)">Rim Light</button><span class="chip-tip">Light source behind the subject creates a glowing outline edge. Subject pops from background.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="window light, soft directional from single source" onclick="toggleSFChip(this,'lighting-setup',true)">Window Light</button><span class="chip-tip">Soft, directional natural light from a single side. Gentle shadows, intimate feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="three-point lighting setup" onclick="toggleSFChip(this,'lighting-setup',true)">Three-Point</button><span class="chip-tip">Key light + fill light + rim light. Standard professional setup — balanced, clear, no harsh shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="practical light sources only — candles, fire, oil lamps" onclick="toggleSFChip(this,'lighting-setup',true)">Practical Only</button><span class="chip-tip">All light comes from visible sources in the scene — candles, fire, lamps. No artificial fill.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="volumetric light rays, god rays through atmosphere" onclick="toggleSFChip(this,'lighting-setup',true)">Volumetric</button><span class="chip-tip">Visible light beams cutting through dust, smoke or mist. Often called god rays.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="split lighting — half face lit, half in shadow" onclick="toggleSFChip(this,'lighting-setup',true)">Split</button><span class="chip-tip">Exactly half the face lit, the other half in complete shadow. High drama, intense mood.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="butterfly lighting — light from directly above" onclick="toggleSFChip(this,'lighting-setup',true)">Butterfly</button><span class="chip-tip">Light directly above the face creates a small butterfly-shaped shadow under the nose. Glamorous look.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="golden divine light emanating from subject" onclick="toggleSFChip(this,'lighting-setup',true)">Divine Light</button><span class="chip-tip">Warm golden glow emanating from or around the subject. Used in spiritual and devotional scenes.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="dramatic storm light — low-angle breaks in dark clouds, violent lightning" onclick="toggleSFChip(this,'lighting-setup',true)">Storm Light</button><span class="chip-tip">Low-angle breaks in dark clouds create harsh dramatic shafts. High contrast, electric atmosphere.</span></span>
+          </div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin:8px 0 6px;font-style:italic;">Natural & Environmental</div>
+          <div class="sf-chips single-select" id="sf-lighting-natural-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="bright daylight, strong direct sunlight, crisp shadows, high visibility" onclick="toggleSFChip(this,'lighting-natural',true)">Bright Daylight</button><span class="chip-tip">Strong, clear sunlight with crisp defined shadows. Colours vivid and saturated. High energy feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="overcast sky, diffused even light, flat soft shadows, natural colour balance" onclick="toggleSFChip(this,'lighting-natural',true)">Overcast</button><span class="chip-tip">Clouds act as a giant softbox. Even, flattering light from all directions. No harsh shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="hazy sun, soft warm glow through thin clouds, gentle shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Hazy Sun</button><span class="chip-tip">Sun visible but softened by thin cloud or haze. Warm diffused glow, gentle shadows.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="harsh midday sun, overhead light, short dark shadows, high contrast" onclick="toggleSFChip(this,'lighting-natural',true)">Harsh Midday</button><span class="chip-tip">Overhead sun creates unflattering short shadows and high contrast. Raw, unforgiving, intense feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="dappled forest light, sunlight filtering through tree canopy" onclick="toggleSFChip(this,'lighting-natural',true)">Dappled Forest</button><span class="chip-tip">Sunlight breaking through leaves creates patches of light and shadow. Magical, natural, layered.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="foggy misty atmosphere, diffused ambient light, reduced visibility, ethereal" onclick="toggleSFChip(this,'lighting-natural',true)">Foggy / Misty</button><span class="chip-tip">Moisture in the air scatters light, softening everything. Mysterious, atmospheric, dreamlike.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="backlit silhouette, strong light source directly behind subject, subject in shadow" onclick="toggleSFChip(this,'lighting-natural',true)">Backlit Silhouette</button><span class="chip-tip">Light source behind the subject puts them in shadow. Dramatic outline, subject becomes a shape.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="candlelit interior, warm flickering amber light, deep surrounding shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Candlelit Interior</button><span class="chip-tip">Warm, intimate, flickering amber light. Deep shadows beyond the flame. Ancient, personal feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="neon night, mixed coloured artificial light sources, urban night atmosphere" onclick="toggleSFChip(this,'lighting-natural',true)">Neon Night</button><span class="chip-tip">City at night lit by neon signs and artificial lights. Coloured reflections on wet surfaces. Cyberpunk or noir feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="blue hour, post-sunset deep blue sky, balanced ambient and artificial light" onclick="toggleSFChip(this,'lighting-natural',true)">Blue Hour</button><span class="chip-tip">The 20 minutes after sunset when the sky turns deep blue. Cool tones, serene mood, city lights begin to glow.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="fire glow, warm orange-red light from open flame, dancing shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Fire Glow</button><span class="chip-tip">Open fire as primary light source. Warm orange-red tones, moving shadows, primal atmosphere.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="moonlit night, cold blue-white ambient light, long soft shadows" onclick="toggleSFChip(this,'lighting-natural',true)">Moonlit</button><span class="chip-tip">Moonlight casts a cold, blue-white ambient glow. Quiet, ethereal, mysterious night atmosphere.</span></span>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Time of Day</div>
+          <div class="sf-chips single-select" id="sf-tod-chips">
+            <button class="sf-chip" data-val="dawn — soft pink-gold horizon light, long shadows, cool air haze" data-label="Dawn" onclick="toggleSFChip(this,'tod',true)">Dawn</button>
+            <button class="sf-chip" data-val="early morning — low warm directional light, long soft shadows" data-label="Early Morning" onclick="toggleSFChip(this,'tod',true)">Early Morning</button>
+            <button class="sf-chip" data-val="late morning — bright warm illumination, even spread, minimal shadows" data-label="Late Morning" onclick="toggleSFChip(this,'tod',true)">Late Morning</button>
+            <button class="sf-chip" data-val="harsh overhead midday light, short dark shadows, high contrast" data-label="Midday" onclick="toggleSFChip(this,'tod',true)">Midday</button>
+            <button class="sf-chip" data-val="golden hour — warm amber directional light, long shadows, rim lighting" data-label="Golden Hour" onclick="toggleSFChip(this,'tod',true)">Golden Hour</button>
+            <button class="sf-chip" data-val="dusk — deep orange-red horizon, dramatic silhouettes, warm-cool split" data-label="Dusk" onclick="toggleSFChip(this,'tod',true)">Dusk</button>
+            <button class="sf-chip" data-val="night — artificial light sources, deep shadows, high contrast pools of light" data-label="Night" onclick="toggleSFChip(this,'tod',true)">Night</button>
+            <button class="sf-chip" data-val="overcast — diffused even light, soft shadows, natural colour balance" data-label="Overcast" onclick="toggleSFChip(this,'tod',true)">Overcast</button>
+          </div>
+        </div>
+
+        <!-- LAYER 12 & 13: CAMERA -->
+        <div class="sf-section">
+          <div class="sf-section-label">Camera & Lens <span class="sf-label-hint">auto-suggested by frame + mood</span></div>
+          <div id="sf-camera-auto" class="sf-camera-auto-display" style="display:none"></div>
+          <div class="sf-chips" id="sf-lens-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="14-24mm ultra-wide lens" onclick="toggleSFChip(this,'lens',true)">14–24mm Ultra-wide</button><span class="chip-tip">Very wide field of view. Dramatic perspective, slight distortion at edges. Great for environments and action.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="35mm lens" onclick="toggleSFChip(this,'lens',true)">35mm</button><span class="chip-tip">Natural wide view close to human eye. Street photography and documentary standard. Subject + environment together.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="50mm standard lens" onclick="toggleSFChip(this,'lens',true)">50mm Standard</button><span class="chip-tip">Closest to what the human eye sees. Versatile, natural perspective, no distortion.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="85mm portrait lens" onclick="toggleSFChip(this,'lens',true)">85mm Portrait</button><span class="chip-tip">The classic portrait lens. Flattering compression, beautiful background blur. Ideal for head and shoulders.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="100mm medium telephoto" onclick="toggleSFChip(this,'lens',true)">100mm Telephoto</button><span class="chip-tip">Compressed perspective, background pushed further away. Great for face close-ups without distortion.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="200mm telephoto compression" onclick="toggleSFChip(this,'lens',true)">200mm+</button><span class="chip-tip">Extreme compression — background appears very close to subject. Isolating, cinematic, distant subject feel.</span></span>
+          </div>
+          <div class="sf-chips" id="sf-aperture-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/1.4 — extreme shallow depth of field, creamy bokeh" onclick="toggleSFChip(this,'aperture',true)">f/1.4 Bokeh</button><span class="chip-tip">Only the subject is sharp — background melts into soft blurry circles. Maximum subject isolation.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/2.8 — shallow depth of field, subject separation" onclick="toggleSFChip(this,'aperture',true)">f/2.8</button><span class="chip-tip">Subject sharp, background softly blurred. The standard portrait and cinema look.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/5.6 — moderate depth" onclick="toggleSFChip(this,'aperture',true)">f/5.6</button><span class="chip-tip">Subject and near-background both reasonably sharp. Balanced depth, versatile.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/8 — deep focus, sharp throughout" onclick="toggleSFChip(this,'aperture',true)">f/8 Deep</button><span class="chip-tip">Almost everything in frame is sharp. Good for environments where location detail matters.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="f/11 — maximum depth of field, everything sharp" onclick="toggleSFChip(this,'aperture',true)">f/11 Max</button><span class="chip-tip">Everything from foreground to background is in sharp focus. Landscape and wide shot standard.</span></span>
+          </div>
+        </div>
+
+        <div class="sf-section">
+          <div class="sf-section-label">Camera Brand / Film Stock</div>
+          <div class="sf-chips single-select" id="sf-camera-brand-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Hasselblad, HNCS colour science, medium format" onclick="toggleSFChip(this,'camera',true)">Hasselblad</button><span class="chip-tip">Medium format camera. Exceptional tonal range, rich colours, fine detail. High-end fashion and portrait standard.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Leica, film-inspired, rich shadows" onclick="toggleSFChip(this,'camera',true)">Leica</button><span class="chip-tip">Film-inspired look, rich shadows, reportage feeling. Slightly warmer and more organic than digital.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Sony A7, clinical sharpness, high resolution" onclick="toggleSFChip(this,'camera',true)">Sony A7</button><span class="chip-tip">Clinical, ultra-sharp, neutral colour. Crisp detail without warmth. Modern and precise.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on Canon, warm skin tones, smooth gradation" onclick="toggleSFChip(this,'camera',true)">Canon</button><span class="chip-tip">Known for flattering warm skin tones and smooth colour gradation. Pleasing and natural.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="shot on ARRI Alexa, cinema standard, filmic latitude" onclick="toggleSFChip(this,'camera',true)">ARRI Alexa</button><span class="chip-tip">The gold standard cinema camera. Hollywood filmic look — wide dynamic range, cinematic colour science.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="35mm film, Kodak Portra, warm skin, natural grain" onclick="toggleSFChip(this,'camera',true)">Kodak Portra</button><span class="chip-tip">Classic 35mm film stock. Warm skin tones, natural grain, slightly faded highlights. Nostalgic feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Fuji Velvia film stock, saturated, vivid landscape" onclick="toggleSFChip(this,'camera',true)">Fuji Velvia</button><span class="chip-tip">Film stock known for punchy, saturated colours. Landscapes and nature pop. Vivid and bold.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="Ilford HP5 black and white film, grain, reportage" onclick="toggleSFChip(this,'camera',true)">Ilford HP5 B&amp;W</button><span class="chip-tip">Classic black and white film. Fine grain, documentary feel. Timeless reportage photography look.</span></span>
+          </div>
+        </div>
+
+        <!-- LAYER 14: MOOD & STYLE -->
+        <div class="sf-section">
+          <div class="sf-section-label">Mood & Emotional State <button class="sf-vocab-add-btn" title="Add to Vocabulary" onclick="openVocabQuickAdd('mood')">⊕</button></div>
+          <div class="sf-chips" id="sf-mood-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="serene authority" onclick="toggleSFChip(this,'mood')">Serene Authority</button><span class="chip-tip">Calm, commanding presence. Power without aggression. The subject owns the space quietly.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="quiet wisdom" onclick="toggleSFChip(this,'mood')">Quiet Wisdom</button><span class="chip-tip">Thoughtful, knowing expression. The look of someone who has seen much and speaks little.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="divine radiance" onclick="toggleSFChip(this,'mood')">Divine Radiance</button><span class="chip-tip">Luminous, otherworldly glow. Used in spiritual and devotional imagery.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="fierce devotion" onclick="toggleSFChip(this,'mood')">Fierce Devotion</button><span class="chip-tip">Intense, passionate focus directed toward something sacred or beloved.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="transcendent calm" onclick="toggleSFChip(this,'mood')">Transcendent Calm</button><span class="chip-tip">Beyond ordinary peace — the stillness of deep meditation or spiritual realisation.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="inner fire" onclick="toggleSFChip(this,'mood')">Inner Fire</button><span class="chip-tip">Determination burning beneath a composed exterior. Intensity held in check.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="battle fury" onclick="toggleSFChip(this,'mood')">Battle Fury</button><span class="chip-tip">Raw, unleashed aggression in the midst of combat. Primal and explosive.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="exhausted but defiant" onclick="toggleSFChip(this,'mood')">Defiant</button><span class="chip-tip">Pushed to the limit but refusing to yield. Physical exhaustion, unbroken spirit.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="meditative absorption" onclick="toggleSFChip(this,'mood')">Meditative</button><span class="chip-tip">Completely absorbed inward. Eyes may be closed or unfocused. Deep stillness.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="sacred awe" onclick="toggleSFChip(this,'mood')">Sacred Awe</button><span class="chip-tip">Overwhelmed by something greater than oneself. Reverence mixed with wonder.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="candid, unposed, raw authenticity" onclick="toggleSFChip(this,'mood')">Candid</button><span class="chip-tip">Unaware of the camera. Natural, unguarded moment. Documentary and street photography feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="whimsical and wonder-filled" onclick="toggleSFChip(this,'mood')">Whimsical</button><span class="chip-tip">Playful, light, magical. The world seen through curious, delighted eyes.</span></span>
+          </div>
+          <!-- Genre+frame combination mood chips load here -->
+          <div class="sf-chips" id="sf-mood-extra-chips"></div>
+          <textarea class="input sf-textarea" id="sf-mood-text" placeholder="Describe the emotional atmosphere or style…" rows="2"></textarea>
+        </div>
+
+        <!-- LAYER 15: SIGNATURE TECHNIQUES -->
+        <div class="sf-section">
+          <div class="sf-section-label">Signature Techniques</div>
+          <div class="sf-toggles-grid" id="sf-sig-toggles">
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-dual-light" onchange="sfState.sigs['dual-light']=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Dual Light Temperature</span>
+                <span class="sf-toggle-switch-desc">Warm subject / cold environment</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-sss" onchange="sfState.sigs.sss=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Subsurface Scattering</span>
+                <span class="sf-toggle-switch-desc">Light through skin</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-particles" onchange="sfState.sigs.particles=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Airborne Particles</span>
+                <span class="sf-toggle-switch-desc">Dust, rain, snow, petals, embers</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-practical" onchange="sfState.sigs.practical=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Practical Light Sources Only</span>
+                <span class="sf-toggle-switch-desc">Candles, fire, lamps only</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-wind" onchange="sfState.sigs.wind=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Wind-Blown Hair Physics</span>
+                <span class="sf-toggle-switch-desc">Individual strand simulation</span>
+              </div>
+            </label>
+            <label class="sf-toggle-switch">
+              <input type="checkbox" id="sig-frozen" onchange="sfState.sigs.frozen=this.checked;updatePrompt()">
+              <div class="sf-toggle-switch-track"></div>
+              <div class="sf-toggle-switch-info">
+                <span class="sf-toggle-switch-name">Frozen Motion Frame</span>
+                <span class="sf-toggle-switch-desc">High-speed freeze, suspended dynamics</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- LAYER 16: QUALITY & RENDER -->
+        <div class="sf-section">
+          <div class="sf-section-label">Quality & Render</div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin-bottom:6px;font-style:italic;">Render Style</div>
+          <div class="sf-chips" id="sf-quality-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="photorealistic" onclick="toggleSFChip(this,'quality')">Photorealistic</button><span class="chip-tip">Looks like a real photograph. No painterly or illustrated qualities.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="ultra-detailed textures" onclick="toggleSFChip(this,'quality')">Ultra-detailed</button><span class="chip-tip">Every surface — fabric, skin, stone — rendered with maximum texture and fine detail.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="natural film grain" onclick="toggleSFChip(this,'quality')">Film Grain</button><span class="chip-tip">Adds the subtle texture of real film photography. Organic, slightly nostalgic feel.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="UE5 cinematic render" onclick="toggleSFChip(this,'quality')">UE5 Cinematic</button><span class="chip-tip">Unreal Engine 5 quality. Used for epic game cinematics and VFX-level photorealism.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="VFX film production still" onclick="toggleSFChip(this,'quality')">VFX Production</button><span class="chip-tip">Hollywood visual effects quality. The look of a frame pulled from a major film production.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="photogrammetry-level surface detail" onclick="toggleSFChip(this,'quality')">Photogrammetry</button><span class="chip-tip">Surfaces scanned with scientific precision — every crack, pore, and texture physically accurate.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="IMAX-level detail" onclick="toggleSFChip(this,'quality')">IMAX Detail</button><span class="chip-tip">Extreme resolution and sharpness throughout the frame. No soft areas, no compression artefacts.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="watercolour illustration, hand-painted" onclick="toggleSFChip(this,'quality')">Watercolour</button><span class="chip-tip">Soft, flowing painted look. Colours bleed at edges. Artistic, not photographic.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="storybook illustration style" onclick="toggleSFChip(this,'quality')">Storybook</button><span class="chip-tip">Warm, illustrated look suited to children's books or animated features. Friendly and expressive.</span></span>
+          </div>
+          <div style="font-size:0.7rem;color:var(--ink-lt);margin:8px 0 6px;font-style:italic;">Power Boosters <span style="font-size:0.65rem;background:var(--amber-bg);color:var(--amber);border-radius:3px;padding:1px 5px;margin-left:4px;">community-proven</span></div>
+          <div class="sf-chips" id="sf-power-chips">
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="8K resolution" onclick="toggleSFChip(this,'quality')">8K Resolution</button><span class="chip-tip">Signals maximum detail and sharpness to the AI engine. Community-proven prompt booster.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="real life, true to life, lifelike" onclick="toggleSFChip(this,'quality')">Real Life</button><span class="chip-tip">Reinforces photographic realism. Pushes the engine away from illustrated or stylised output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="subsurface scattering, light through skin" onclick="toggleSFChip(this,'quality')">Subsurface</button><span class="chip-tip">Light penetrating and scattering through skin — the key technique that makes human skin look real, not plastic.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="depth of field mastery, perfect bokeh" onclick="toggleSFChip(this,'quality')">DOF Mastery</button><span class="chip-tip">Signals precise, controlled depth of field. Sharp subject, intentional blur — not accidental softness.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="hyperrealistic, indistinguishable from photograph" onclick="toggleSFChip(this,'quality')">Hyperrealistic</button><span class="chip-tip">One level beyond photorealistic — every detail so precise it's impossible to tell from a real photograph.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="cinematic colour grading, professional colour science" onclick="toggleSFChip(this,'quality')">Cinematic Grade</button><span class="chip-tip">Professional colour grading as seen in feature films. Controlled tones, intentional palette, not raw camera output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="physically accurate lighting, real-world light behaviour" onclick="toggleSFChip(this,'quality')">Physically Accurate</button><span class="chip-tip">Light behaves exactly as it does in the real world — falloff, reflection, refraction, shadow softness all correct.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="award-winning photography" onclick="toggleSFChip(this,'quality')">Award-Winning</button><span class="chip-tip">Signals compositional and technical excellence. Pushes the engine toward its highest-quality output.</span></span>
+            <span class="sf-chip-wrap"><button class="sf-chip" data-val="masterpiece, highest quality" onclick="toggleSFChip(this,'quality')">Masterpiece</button><span class="chip-tip">A widely-used community booster. Pushes the engine toward its best possible output for this prompt.</span></span>
+          </div>
+        </div>
+
+        <!-- LAYER 17: NEGATIVE PROMPTS -->
+        <div class="sf-section">
+          <div class="sf-section-label">Negative Prompts <span class="sf-label-hint" id="sf-neg-platform-hint">platform-aware format</span></div>
+          <div class="sf-chips" id="sf-neg-chips">
+            <button class="sf-chip" data-val="modern elements" onclick="toggleSFChip(this,'neg')">No Modern</button>
+            <button class="sf-chip" data-val="synthetic fabrics" onclick="toggleSFChip(this,'neg')">No Synthetic</button>
+            <button class="sf-chip" data-val="power lines" onclick="toggleSFChip(this,'neg')">No Power Lines</button>
+            <button class="sf-chip" data-val="cartoon style" onclick="toggleSFChip(this,'neg')">No Cartoon</button>
+            <button class="sf-chip" data-val="plastic skin" onclick="toggleSFChip(this,'neg')">No Plastic Skin</button>
+            <button class="sf-chip" data-val="HDR processing" onclick="toggleSFChip(this,'neg')">No HDR</button>
+            <button class="sf-chip" data-val="watermark" onclick="toggleSFChip(this,'neg')">No Watermark</button>
+            <button class="sf-chip" data-val="distorted proportions" onclick="toggleSFChip(this,'neg')">No Distortion</button>
+            <button class="sf-chip" data-val="merged fingers" onclick="toggleSFChip(this,'neg')">No Merged Fingers</button>
+            <button class="sf-chip" data-val="extra limbs" onclick="toggleSFChip(this,'neg')">No Extra Limbs</button>
+            <button class="sf-chip" data-val="western fantasy aesthetic" onclick="toggleSFChip(this,'neg')">No Western Fantasy</button>
+            <button class="sf-chip" data-val="flat lighting" onclick="toggleSFChip(this,'neg')">No Flat Lighting</button>
+          </div>
+          <textarea class="input sf-textarea" id="sf-neg-text" placeholder="Add custom negatives…" rows="2"></textarea>
+        </div>
+
+        <!-- MOTION LAYER (shown when Motion Poster selected) -->
+        <div id="sf-motion-layer" style="display:none">
+          <div class="sf-section-label sf-section-divider-label">Motion Poster Settings</div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Element</div>
+            <div class="sf-chips single-select" id="sf-motion-element-chips">
+              <button class="sf-chip" data-val="hair" onclick="toggleSFChip(this,'motion-element',true)">Hair</button>
+              <button class="sf-chip" data-val="fire" onclick="toggleSFChip(this,'motion-element',true)">Fire</button>
+              <button class="sf-chip" data-val="fabric / clothing" onclick="toggleSFChip(this,'motion-element',true)">Fabric</button>
+              <button class="sf-chip" data-val="background environment" onclick="toggleSFChip(this,'motion-element',true)">Background</button>
+              <button class="sf-chip" data-val="particles" onclick="toggleSFChip(this,'motion-element',true)">Particles</button>
+              <button class="sf-chip" data-val="water / rain" onclick="toggleSFChip(this,'motion-element',true)">Water / Rain</button>
+              <button class="sf-chip" data-val="smoke / mist" onclick="toggleSFChip(this,'motion-element',true)">Smoke / Mist</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Type</div>
+            <div class="sf-chips single-select" id="sf-motion-type-chips">
+              <button class="sf-chip" data-val="loop" onclick="toggleSFChip(this,'motion-type',true)">Loop</button>
+              <button class="sf-chip" data-val="bounce" onclick="toggleSFChip(this,'motion-type',true)">Bounce</button>
+              <button class="sf-chip" data-val="drift" onclick="toggleSFChip(this,'motion-type',true)">Drift</button>
+              <button class="sf-chip" data-val="pulse" onclick="toggleSFChip(this,'motion-type',true)">Pulse</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Motion Intensity</div>
+            <div class="sf-chips single-select" id="sf-motion-intensity-chips">
+              <button class="sf-chip" data-val="subtle" onclick="toggleSFChip(this,'motion-intensity',true)">Subtle</button>
+              <button class="sf-chip" data-val="moderate" onclick="toggleSFChip(this,'motion-intensity',true)">Moderate</button>
+              <button class="sf-chip" data-val="dramatic" onclick="toggleSFChip(this,'motion-intensity',true)">Dramatic</button>
+            </div>
+          </div>
+          <div class="sf-section">
+            <div class="sf-section-label">Duration</div>
+            <div class="sf-chips single-select" id="sf-motion-duration-chips">
+              <button class="sf-chip" data-val="2 seconds" onclick="toggleSFChip(this,'motion-duration',true)">2s</button>
+              <button class="sf-chip" data-val="3 seconds" onclick="toggleSFChip(this,'motion-duration',true)">3s</button>
+              <button class="sf-chip" data-val="5 seconds" onclick="toggleSFChip(this,'motion-duration',true)">5s</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYER 18: PLATFORM SELECTOR -->
+        <div class="sf-section sf-platform-section">
+          <div class="sf-section-label">Output Platform</div>
+          <div class="sf-platform-cards" id="sf-platform-cards">
+            <button class="sf-platform-card" data-val="mj" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Midjourney</div>
+              <div class="sf-platform-caps">Still Image</div>
+            </button>
+            <button class="sf-platform-card active" data-val="nb" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Nano Banana Pro</div>
+              <div class="sf-platform-caps">Still · Motion · Storyboard</div>
+            </button>
+            <button class="sf-platform-card" data-val="gpt" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">GPT Image-2</div>
+              <div class="sf-platform-caps">Still · Motion · Storyboard</div>
+            </button>
+            <button class="sf-platform-card" data-val="kling" onclick="setSFPlatform(this)">
+              <div class="sf-platform-name">Kling Image 3.0</div>
+              <div class="sf-platform-caps">Still only</div>
+            </button>
+          </div>
+          <div id="sf-platform-warning" class="sf-platform-warning" style="display:none"></div>
+        </div>
+
+      </div><!-- /sf-stack -->
+    </div><!-- /sf-left -->
+
+    <!-- RIGHT: Output Panel -->
+    <div class="sf-right" id="sf-right">
+      <div class="sf-output-panel">
+
+        <!-- Richness indicator -->
+        <div class="sf-richness-row">
+          <span class="sf-richness-label">Prompt Richness</span>
+          <div class="sf-richness-dots" id="sf-richness-dots">
+            <span class="sf-dot" data-i="1"></span>
+            <span class="sf-dot" data-i="2"></span>
+            <span class="sf-dot" data-i="3"></span>
+            <span class="sf-dot" data-i="4"></span>
+            <span class="sf-dot" data-i="5"></span>
+          </div>
+          <span class="sf-richness-text" id="sf-richness-text">Minimal</span>
+        </div>
+
+        <!-- Platform badge -->
+        <div class="sf-output-header">
+          <div class="sf-output-platform-badge" id="sf-output-platform-badge">Nano Banana Pro</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="sf-auto-toggle-btn" id="sf-auto-toggle" onclick="toggleAutoView()" title="Show/hide auto-additions">Show auto-adds</button>
+            <button class="btn btn-primary btn-sm" onclick="copyPrompt()" id="sf-copy-btn">Copy Prompt</button>
+            <button class="btn btn-secondary btn-sm" id="sf-save-seq-btn" onclick="sfSaveToSequence()" title="Save this prompt as a shot in a Sequence" style="display:none">💾 Save to Sequence</button>
+          </div>
+        </div>
+
+        <!-- Prompt output -->
+        <div class="sf-prompt-box" id="sf-prompt-box">
+          <div class="sf-prompt-empty">Select options on the left to build your prompt.</div>
+        </div>
+
+        <!-- Platform params (shown separately) -->
+        <div id="sf-params-box" style="display:none">
+          <div class="sf-params-label">Platform Parameters</div>
+          <div class="sf-params-value" id="sf-params-value"></div>
+        </div>
+
+        <!-- Auto-additions detail (hidden by default) -->
+        <div id="sf-auto-detail" style="display:none">
+          <div class="sf-params-label">Auto-added <span style="color:var(--amber)">(prerequisite engine)</span></div>
+          <div class="sf-auto-detail-value" id="sf-auto-detail-value"></div>
+        </div>
+
+        <!-- Prompt tips for active platform -->
+        <div class="sf-platform-tips" id="sf-platform-tips"></div>
+
+      </div>
+    </div><!-- /sf-right -->
+
+  </div><!-- /sf-layout -->
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: STORYBOARD                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-storyboard" class="view">
+  <div class="page-wrap">
+
+    <!-- No project state -->
+    <div id="sb-no-project" style="display:none">
+      <div class="coming-soon-view">
+        <div class="cs-icon">🎬</div>
+        <h2>Create a project first</h2>
+        <p>Add characters and locations to your library — they'll be available for every panel.</p>
+        <button class="btn btn-primary" onclick="openProjectManager(true)">＋ Create Project</button>
+      </div>
+    </div>
+
+    <!-- Storyboard content -->
+    <div id="sb-content">
+
+      <!-- STORYBOARD ONBOARDING BANNER -->
+      <div class="sb-onboarding-banner" id="sb-onboarding-banner" style="display:none">
+        <div class="sb-onboarding-title">🎬 How to use Storyboard</div>
+        <div class="sb-onboarding-steps">
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">1</span><span>Add your <strong>Characters and Locations</strong> to the Library first — use <strong>@name</strong> to reference them in your story.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">2</span><span>Write your story in the text area. Each sentence becomes a panel beat. Mention characters and locations by name.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">3</span><span>Set your <strong>Platform</strong>, choose how many panels, and optionally add a <strong>Visual Style</strong> that travels to every panel.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">4</span><span>Click <strong>Generate Storyboard</strong>. The app assigns shots, infers compositions, and builds cinematic prompts for each panel.</span></div>
+          <div class="sb-onboarding-step"><span class="sb-onboarding-step-num">5</span><span>Review each panel's <strong>Composition</strong> block — edit it to adjust the spatial layout. The prompt updates live.</span></div>
+        </div>
+        <div class="sb-onboarding-extras">
+          <span class="sb-onboarding-tip">✦ <strong>Enable Smart Split</strong> in Settings for director-level shot assignments via Claude API.</span>
+          <span class="sb-onboarding-tip">✦ <strong>Spatial Context</strong> on your Location asset improves shot accuracy.</span>
+        </div>
+        <button class="sb-onboarding-dismiss" onclick="dismissSBOnboarding()" title="Dismiss">✕</button>
+      </div>
+
+      <!-- STEP 1: Story Input -->
+      <div id="sb-step1" class="sb-step">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Sequence / Storyboard</h1>
+            <p class="page-subtitle">Write your story using @mentions to link library assets. The app handles the rest.</p>
+          </div>
+        </div>
+
+        <!-- Step 1: Story text with @ mentions -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 1 — Write Your Story</div>
+          <p class="sb-card-hint">Write naturally. Use <strong>@name</strong> to link a library asset — character, location, prop, era. Type @ to see your library. Anything without an @ tag will be described by the AI.</p>
+          <!-- Story textarea wrapper for @ picker positioning -->
+          <div class="sb-story-wrap" id="sb-story-wrap">
+            <div class="sb-story-display" id="sb-story-display"></div>
+            <textarea class="input sb-story-input" id="sb-story-text"
+              placeholder="e.g. @Raju is walking through @cityBg. He looks up and sees a @bird circling overhead…"
+              rows="7"
+              oninput="onSBStoryInput(event)"
+              onkeydown="onSBStoryKeydown(event)"
+              onfocus="analyseUnlinked(this.value)"
+            ></textarea>
+            <!-- @ picker dropdown -->
+            <div class="sb-at-picker" id="sb-at-picker" style="display:none">
+              <div class="sb-at-picker-list" id="sb-at-picker-list"></div>
+            </div>
+          </div>
+          <!-- Unlinked element warnings -->
+          <div id="sb-unlinked-warn" class="sb-unlinked-warn" style="display:none"></div>
+        </div>
+
+        <!-- Step 2: Panel config (asset selector removed — @ handles it) -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 2 — Panel Configuration</div>
+          <div class="sb-config-row">
+            <div class="sb-config-group">
+              <div class="sb-config-label">Number of Panels</div>
+              <div class="sb-panel-count-chips">
+                <button class="sf-chip" data-val="3" onclick="setSBPanelCount(this)">3</button>
+                <button class="sf-chip active" data-val="4" onclick="setSBPanelCount(this)">4</button>
+                <button class="sf-chip" data-val="6" onclick="setSBPanelCount(this)">6</button>
+                <button class="sf-chip" data-val="8" onclick="setSBPanelCount(this)">8</button>
+                <button class="sf-chip" data-val="12" onclick="setSBPanelCount(this)">12</button>
+              </div>
+            </div>
+            <div class="sb-config-group">
+              <div class="sb-config-label">Platform</div>
+              <div class="sb-panel-count-chips">
+                <button class="sf-chip active" data-val="nb" onclick="setSBPlatform(this)">Nano Banana Pro</button>
+                <button class="sf-chip" data-val="gpt" onclick="setSBPlatform(this)">GPT Image-2</button>
+                <button class="sf-chip" data-val="kling" onclick="setSBPlatform(this)">Kling Video 3.0</button>
+                <button class="sf-chip sb-mj-disabled" data-val="mj" title="Midjourney does not support storyboards" disabled>Midjourney ✕</button>
+              </div>
+            </div>
+            <div class="sb-config-group">
+              <div class="sb-config-label">Frame Aspect Ratio</div>
+              <div class="sb-panel-count-chips" id="sb-ratio-chips">
+                <button class="sf-chip active" data-val="16:9" onclick="setSBRatio(this)">16:9</button>
+                <button class="sf-chip" data-val="4:3" onclick="setSBRatio(this)">4:3</button>
+                <button class="sf-chip" data-val="1:1" onclick="setSBRatio(this)">1:1</button>
+                <button class="sf-chip" data-val="9:16" onclick="setSBRatio(this)">9:16</button>
+                <button class="sf-chip" data-val="2.39:1" onclick="setSBRatio(this)">2.39:1</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Style preferences -->
+        <div class="sb-card">
+          <div class="sb-card-title">Step 3 — Visual Style Preferences <span class="sb-optional">optional</span></div>
+          <div class="sb-style-row">
+            <div class="field">
+              <label class="field-label">Overall Visual Style</label>
+              <input class="input" id="sb-style" placeholder="e.g. epic mythological, documentary realism, dark fantasy">
+            </div>
+            <div class="field">
+              <label class="field-label">Colour Mood</label>
+              <input class="input" id="sb-colour" placeholder="e.g. warm amber tones, desaturated cool, golden hour throughout">
+            </div>
+            <div class="field">
+              <label class="field-label">Camera Style</label>
+              <input class="input" id="sb-camera" placeholder="e.g. handheld documentary, cinematic wide angles, intimate close-ups">
+            </div>
+          </div>
+        </div>
+
+        <!-- API Key for Smart Split -->
+        <div class="sb-card sb-api-card">
+          <div class="sb-card-title">
+            Smart Split
+            <span class="sb-online-badge">✦ Optional · Requires Anthropic API Key</span>
+          </div>
+          <p class="sb-card-hint">Smart Split uses Claude to intelligently break your story into dramatic panel beats. Without it, the app splits by sentence/paragraph (still works well).</p>
+          <div id="sb-api-key-status" style="font-size:0.78rem;color:var(--ink-mid);display:flex;align-items:center;gap:8px;">
+            <span id="sb-api-key-indicator">⬤</span>
+            <span id="sb-api-key-label">No API key set</span>
+            <button class="btn btn-ghost btn-sm" onclick="openSettings()">Configure in Settings →</button>
+          </div>
+        </div>
+
+        <!-- Generate button -->
+        <div class="sb-generate-row">
+          <button class="btn btn-primary sb-generate-btn" id="sb-generate-btn" onclick="generateStoryboard()">
+            Generate Panel Breakdown →
+          </button>
+          <span class="sb-generate-hint" id="sb-generate-hint"></span>
+        </div>
+      </div>
+
+      <!-- STEP 5+: Panel breakdown (shown after generation) -->
+      <div id="sb-step2" style="display:none">
+
+        <!-- Header with back + export -->
+        <div class="sb-panels-header">
+          <div>
+            <div class="sb-panels-title" id="sb-panels-title">Storyboard — 4 Panels</div>
+            <div class="sb-panels-sub" id="sb-panels-platform-badge"></div>
+          </div>
+          <div class="sb-panels-actions">
+            <button class="btn btn-secondary btn-sm" onclick="resetStoryboard()">← Edit Story</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyAllIndividual()">Copy Individual</button>
+            <button class="btn btn-secondary btn-sm" id="sb-copy-grid-btn" onclick="copyAsGrid()">Copy as Grid</button>
+            <button class="btn btn-secondary btn-sm" id="sb-copy-klingvideo-btn" style="display:none" onclick="copyAsKlingMultiShot()">Copy Multi-Shot</button>
+            <button class="btn btn-secondary btn-sm" onclick="sbSaveToSequence()">💾 Save to Sequence</button>
+            <button class="btn btn-primary btn-sm" onclick="saveStoryboardMD()">Save .md</button>
+          </div>
+        </div>
+
+        <!-- Undo bar (hidden until cascade happens) -->
+        <div id="sb-undo-bar" class="sb-undo-bar" style="display:none">
+          <span class="sb-undo-msg" id="sb-undo-msg"></span>
+          <button class="btn btn-secondary btn-sm" onclick="undoCascade()">↩ Undo</button>
+        </div>
+
+        <!-- Panel cards -->
+        <div id="sb-panels-grid" class="sb-panels-grid"></div>
+
+      </div>
+
+    </div><!-- /sb-content -->
+
+  </div><!-- /page-wrap -->
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: ASSET EDITOR                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="asset-modal-overlay" onclick="handleOverlayClick(event, 'asset-modal-overlay')">
+  <div class="modal" id="asset-modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="asset-modal-title">Add Character</h2>
+      <button class="modal-close" onclick="closeModal('asset-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body" id="asset-modal-body">
+      <!-- dynamically populated -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('asset-modal-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Save Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: REFERENCE IMAGE PANEL (v7.2.0 — task #2)             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="reference-panel-overlay" onclick="handleOverlayClick(event, 'reference-panel-overlay')">
+  <div class="modal" id="reference-panel-modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2 class="modal-title">Reference Images per Shot</h2>
+      <button class="modal-close" onclick="closeModal('reference-panel-overlay')">✕</button>
+    </div>
+    <div class="modal-body" id="reference-panel-body" style="max-height:60vh;overflow-y:auto">
+      <!-- dynamically populated by renderReferencePanel() -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="selectAllReferenceImages()">Select All</button>
+      <button class="btn btn-secondary" onclick="closeModal('reference-panel-overlay')">Close</button>
+      <button class="btn btn-primary" onclick="downloadSelectedReferenceImages()">Download Selected (.zip)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: PROJECT MANAGER                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="project-modal-overlay" onclick="handleOverlayClick(event, 'project-modal-overlay')">
+  <div class="modal" id="project-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Projects</h2>
+      <button class="modal-close" onclick="closeModal('project-modal-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="project-list"></div>
+      <div class="section-divider">New Project</div>
+      <div class="field">
+        <label class="field-label" for="new-project-name">Project Name <span class="field-required">*</span></label>
+        <div style="display:flex; gap:8px;">
+          <input class="input" id="new-project-name" placeholder="e.g. Mahabharata — Battle of Kurukshetra" maxlength="80" onkeydown="if(event.key==='Enter') addProject()">
+          <button class="btn btn-primary" onclick="addProject()">Create</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('project-modal-overlay')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  MODAL: SETTINGS                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="settings-modal-overlay" onclick="handleOverlayClick(event,'settings-modal-overlay')">
+  <div class="modal" id="settings-modal" style="max-width:860px;width:95vw">
+    <div class="modal-header">
+      <h2 class="modal-title">Settings</h2>
+      <button class="modal-close" onclick="closeModal('settings-modal-overlay')">✕</button>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="api" onclick="switchSettingsTab('api')">API Keys</button>
+      <button class="settings-tab" data-tab="vocab" onclick="switchSettingsTab('vocab')">Vocabulary</button>
+      <button class="settings-tab" data-tab="sponsor" onclick="switchSettingsTab('sponsor')">Sponsor</button>
+      <button class="settings-tab" data-tab="danger" onclick="switchSettingsTab('danger')">Danger Zone</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ── TAB: API KEYS ──────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-api">
+        <div class="settings-group">
+          <div class="settings-group-title">API Keys</div>
+
+          <!-- Anthropic -->
+          <div class="settings-api-row">
+            <div class="settings-api-label">
+              Anthropic (Claude)
+              <span class="api-badge api-badge-active" id="anthropic-status-badge">No key</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:pointer;font-size:0.75rem;font-weight:500;color:var(--ink-mid);">
+                <input type="checkbox" id="settings-anthropic-active"
+                  onchange="saveApiActive('anthropic', this.checked); updateApiKeyIndicator()"
+                  style="accent-color:var(--amber);">
+                Use API — enable Smart Split &amp; Image Analysis
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" id="settings-anthropic-key" type="password"
+                placeholder="sk-ant-api03-…"
+                autocomplete="off"
+                oninput="saveApiKey('anthropic', this.value)">
+              <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('settings-anthropic-key', this)">Show</button>
+            </div>
+            <div class="settings-api-hint">
+              Used for Smart Split and Image Analysis.<br>
+              <a href="https://console.anthropic.com/account/keys" target="_blank">Get your Anthropic API key →</a>
+              &nbsp;·&nbsp; Stored in your browser only. Never sent anywhere except Anthropic's API.
+            </div>
+          </div>
+
+          <!-- Google (Gemini) -->
+          <div class="settings-api-row">
+            <div class="settings-api-label">
+              Google AI Studio (Gemini)
+              <span class="api-badge api-badge-active" id="gemini-status-badge">No key</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:pointer;font-size:0.75rem;font-weight:500;color:var(--ink-mid);">
+                <input type="checkbox" id="settings-gemini-active"
+                  onchange="saveApiActive('gemini', this.checked); updateApiKeyIndicator()"
+                  style="accent-color:var(--amber);">
+                Use API — enable Image Analysis
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" id="settings-gemini-key" type="password"
+                placeholder="AIza…"
+                autocomplete="off"
+                oninput="saveApiKey('gemini', this.value)">
+              <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('settings-gemini-key', this)">Show</button>
+            </div>
+            <div class="settings-api-hint">
+              Used for Image Analysis (vision). Does not generate images — Nano Banana Pro generation still happens in Gemini directly.<br>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank">Get your Gemini API key →</a>
+              &nbsp;·&nbsp; Stored in your browser only. Never sent anywhere except Google's API.
+            </div>
+          </div>
+
+          <!-- Vision provider choice -->
+          <div class="settings-api-row" id="vision-provider-row">
+            <div class="settings-api-label">Vision provider for Image Analysis</div>
+            <div class="settings-api-input-row">
+              <select class="input" id="settings-vision-provider"
+                onchange="saveVisionProvider(this.value)" style="max-width:240px">
+                <option value="anthropic">Claude (Anthropic)</option>
+                <option value="gemini">Gemini (Google)</option>
+              </select>
+            </div>
+            <div class="settings-api-hint">
+              Choose which API the "✦ Analyse" button on character/asset images uses. Switch here any time — e.g. if one provider is down or out of credits.
+            </div>
+          </div>
+
+          <!-- OpenAI — coming soon -->
+          <div class="settings-api-row settings-api-disabled">
+            <div class="settings-api-label">
+              OpenAI
+              <span class="api-badge api-badge-soon">Coming Soon</span>
+              <label style="display:flex;align-items:center;gap:5px;margin-left:auto;cursor:not-allowed;font-size:0.75rem;font-weight:500;color:var(--ink-lt);">
+                <input type="checkbox" disabled style="accent-color:var(--amber);">
+                Use API (coming soon)
+              </label>
+            </div>
+            <div class="settings-api-input-row">
+              <input class="input" type="password" placeholder="sk-…" disabled>
+            </div>
+            <div class="settings-api-hint">Will power direct GPT Image-2 generation and image analysis.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: VOCABULARY ────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-vocab" style="display:none">
+        <div id="vocab-manager-root"></div>
+      </div>
+
+      <!-- ── TAB: SPONSOR ───────────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-sponsor" style="display:none">
+        <div class="settings-group">
+          <div class="settings-group-title">Sponsor teammates</div>
+          <p class="field-hint" style="margin-bottom:14px">
+            Share your own API key with specific teammates so they can use Image Analysis without
+            needing a key of their own. Your key is sent once over HTTPS, stored encrypted on the
+            server, and is <strong>never sent to their browser</strong> — every analysis request is
+            relayed through the server.
+          </p>
+
+          <div class="settings-api-row">
+            <div class="settings-api-label">Re-enter your password to manage sponsoring</div>
+            <div class="settings-api-input-row">
+              <input class="input" id="sponsor-confirm-password" type="password"
+                placeholder="Your account password" autocomplete="current-password">
+              <button class="btn btn-secondary btn-sm" onclick="loadSponsorSettingsUI()">Unlock</button>
+            </div>
+            <div class="settings-api-hint" id="sponsor-unlock-hint"></div>
+          </div>
+
+          <div id="sponsor-managed-section" style="display:none">
+            <div class="settings-api-row">
+              <div class="settings-api-label">Your Anthropic key for sponsoring</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-anthropic-key" type="password"
+                  placeholder="Leave blank to keep current key" autocomplete="off">
+                <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('sponsor-anthropic-key', this)">Show</button>
+              </div>
+              <div class="settings-api-hint" id="sponsor-anthropic-status"></div>
+            </div>
+
+            <div class="settings-api-row">
+              <div class="settings-api-label">Your Gemini key for sponsoring</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-gemini-key" type="password"
+                  placeholder="Leave blank to keep current key" autocomplete="off">
+                <button class="btn btn-secondary btn-sm" onclick="toggleKeyVisibility('sponsor-gemini-key', this)">Show</button>
+              </div>
+              <div class="settings-api-hint" id="sponsor-gemini-status"></div>
+            </div>
+
+            <div class="settings-api-row">
+              <div class="settings-api-label">Teammates allowed to use your key</div>
+              <div class="settings-api-input-row">
+                <input class="input" id="sponsor-add-username" placeholder="Username to add" maxlength="50">
+                <button class="btn btn-secondary btn-sm" onclick="addSponsoredUsername()">Add</button>
+              </div>
+              <div id="sponsor-username-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              <div class="settings-api-hint">Only usernames listed here can use your sponsored key — exact match required.</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSponsorSettings()">Save sponsor settings</button>
+            <span id="sponsor-save-status" style="margin-left:10px;font-size:0.85rem;color:var(--ink-mid)"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: DANGER ZONE ───────────────────────────────── -->
+      <div class="settings-tab-panel" id="settings-panel-danger" style="display:none">
+        <div class="field" style="margin-top:8px">
+          <label class="field-label" style="color:var(--red)">Reset App</label>
+          <p class="field-hint">Clears all projects, library assets, custom vocabulary, and saved settings. Cannot be undone.</p>
+          <button class="btn btn-danger" style="margin-top:4px" onclick="confirmResetApp()">Clear all data</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('settings-modal-overlay')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  CONFIRM DIALOG                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  TOAST                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  VIEW: SEQUENCES                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-sequences" class="view">
+  <div class="page-wrap sequences-page-wrap">
+    <div id="sequences-view-inner">
+      <div class="seq-empty-state">
+        <div class="seq-empty-icon">🎞</div>
+        <p>Select a project to view sequences.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  IMAGE LIGHTBOX                                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="img-lightbox-overlay" onclick="closeLightbox()">
+  <button id="img-lightbox-close" onclick="closeLightbox()" title="Close">✕</button>
+  <img id="img-lightbox-img" src="" alt="Full size preview" onclick="event.stopPropagation()">
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- SCRIPTS (loaded in dependency order) -->
+<script src="js/01-core.js"></script>
+<script src="js/12-progress.js"></script>
+<script src="js/02-singleframe.js"></script>
+<script src="js/03-storyboard.js"></script>
+<script src="js/04-mentions.js"></script>
+<script src="js/05-translator.js"></script>
+<script src="js/06-scene-engine.js"></script>
+<script src="js/07-settings.js"></script>
+<script src="js/08-vocabulary.js"></script>
+<script src="js/09-image-analyser.js"></script>
+<script src="js/10-sequences.js"></script>
+<script src="js/11-reference-panel.js"></script>
+<script src="js/00-api.js"></script>
+<script>
+const VOCABULARY_DATA = {
+  "_comment": "SceneSmith Studio v7 — Built-in vocabulary library. Add keywords here and rebuild.",
+  "_version": "7.0",
+
+  "genres": {
+    "cinematic-portrait": {
+      "label": "Cinematic Portrait",
+      "subject": ["elderly man", "young woman", "warrior", "saint", "sage", "merchant", "soldier"],
+      "mood": ["contemplative", "weathered wisdom", "quiet dignity", "inner fire", "serene authority"],
+      "env": ["interior", "window light", "street", "studio neutral"],
+      "wardrobe": ["period costume", "natural fabric", "worn clothing"]
+    },
+    "mythology": {
+      "label": "Mythology / Devotional",
+      "subject": ["deity", "divine being", "saint", "sage", "rishi", "devotee", "ascetic", "warrior-saint"],
+      "mood": ["divine radiance", "wrathful compassion", "serene wisdom", "fierce devotion", "transcendent calm"],
+      "env": ["temple courtyard", "forest ashram", "riverbank ghat", "mountain peak", "cosmic void"],
+      "wardrobe": ["rudraksha mala", "kamandalu", "trishul", "lotus", "sacred text", "diya", "conch shell"]
+    },
+    "fantasy": {
+      "label": "Fantasy / Battle",
+      "subject": ["warrior", "hero", "demon", "creature", "knight", "assassin", "mage", "commander"],
+      "mood": ["battle fury", "predatory calm", "warrior focus", "primal power", "unstoppable momentum"],
+      "env": ["war-torn battlefield", "apocalyptic landscape", "dark fortress", "storm-lit sky"],
+      "wardrobe": ["battle armour", "enchanted weapon", "war paint", "tattered cloak"]
+    },
+    "street": {
+      "label": "Street / Documentary",
+      "subject": ["vendor", "commuter", "child", "elder", "worker", "crowd"],
+      "mood": ["candid, unposed, raw authenticity", "fleeting moment", "observed life"],
+      "env": ["busy market street", "public transport", "urban alley", "open square"],
+      "wardrobe": ["everyday clothing", "work uniform", "street wear"]
+    },
+    "product": {
+      "label": "Product / Commercial",
+      "subject": ["product", "object", "bottle", "device", "food item", "jewellery piece"],
+      "mood": ["clean and precise", "commercial quality", "editorial product"],
+      "env": ["white studio background", "concrete surface", "lifestyle context", "minimal surface"],
+      "wardrobe": []
+    },
+    "illustrated": {
+      "label": "Illustrated / Children's",
+      "subject": ["child character", "animal companion", "magical creature", "fairy", "toy"],
+      "mood": ["whimsical and wonder-filled", "warm and playful", "innocent adventure"],
+      "env": ["enchanted forest", "cosy interior", "magical landscape", "picture book setting"],
+      "wardrobe": ["colourful clothing", "fantasy costume", "cute accessories"]
+    }
+  },
+
+  "powerBoosters": [
+    "8K resolution",
+    "real life, true to life, lifelike",
+    "subsurface scattering, light through skin",
+    "depth of field mastery, perfect bokeh",
+    "hyperrealistic, indistinguishable from photograph",
+    "cinematic colour grading, professional colour science",
+    "physically accurate lighting, real-world light behaviour",
+    "award-winning photography",
+    "masterpiece, highest quality"
+  ],
+
+  "signatureTechniques": {
+    "dual-light": "warm amber practical light against cold blue-grey environment, dual light temperature contrast between subject and background",
+    "sss": "subsurface scattering skin render, light passes through ear cartilage and fingertips creating warm reddish translucency, photorealistic skin physics",
+    "particles": "dust motes suspended mid-air, individually visible, backlit, volumetric atmosphere, physically accurate particle dynamics",
+    "practical": "all illumination from visible practical sources in scene — candles, fire, oil lamps, window light — no artificial fill, no light without visible source",
+    "wind": "individual hair strand separation, wind-blown directional movement, flyaway strands catching light, realistic hair physics simulation",
+    "frozen": "high-speed frozen moment, motion blur on periphery only, sharp subject at point of impact, suspended mid-motion with physically accurate dynamics"
+  }
+}
+;
+</script>
+</body>
+</html>
